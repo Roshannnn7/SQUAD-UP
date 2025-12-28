@@ -4,13 +4,17 @@ const userSchema = mongoose.Schema(
     {
         firebaseUid: {
             type: String,
-            required: true,
             unique: true,
+            sparse: true,
         },
         email: {
             type: String,
             required: true,
             unique: true,
+        },
+        password: {
+            type: String,
+            select: false,
         },
         role: {
             type: String,

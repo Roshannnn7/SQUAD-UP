@@ -20,6 +20,7 @@ const projectRoutes = require('./routes/projectRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const videoCallRoutes = require('./routes/videoCallRoutes');
 
 // Import middleware
 const { protect } = require('./middleware/auth');
@@ -35,10 +36,11 @@ const server = http.createServer(app);
 // Initialize Socket.IO with CORS
 const io = socketIo(server, {
     cors: {
-        origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+        origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim()),
         methods: ['GET', 'POST'],
         credentials: true,
     },
+    transports: ['websocket', 'polling'],
 });
 
 // Initialize socket handler
@@ -54,7 +56,7 @@ const limiter = rateLimit({
 // Apply middleware
 app.use(helmet());
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim()),
     credentials: true,
 }));
 app.use(express.json());
@@ -76,6 +78,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/video-calls', videoCallRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -90,8 +93,24 @@ app.use('*', (req, res) => {
     res.status(404).json({ message: 'Endpoint not found' });
 });
 
-// Start server
+// Start server with explicit host and improved logging
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+const HOST = process.env.HOST || '0.0.0.0';
+
+server.on('error', (err) => {
+    console.error('Server error:', err);
+});
+
+server.listen(PORT, HOST, () => {
+    const addr = server.address();
+    const host = addr.address === '::' ? '0.0.0.0' : addr.address;
+    console.log(`Server running on http://${host}:${addr.port} in ${process.env.NODE_ENV || 'development'} mode`);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled Rejection:', reason);
 });

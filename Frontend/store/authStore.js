@@ -6,24 +6,28 @@ export const useAuthStore = create(
         (set, get) => ({
             user: null,
             token: null,
+            refreshToken: null,
             isLoading: true,
 
             setUser: (user) => set({ user }),
             setToken: (token) => set({ token }),
+            setRefreshToken: (refreshToken) => set({ refreshToken }),
             setLoading: (isLoading) => set({ isLoading }),
 
-            login: (userData, token) => {
-                set({ user: userData, token });
+            login: (userData, token, refreshToken) => {
+                set({ user: userData, token, refreshToken });
                 if (typeof window !== 'undefined') {
                     localStorage.setItem('token', token);
+                    localStorage.setItem('refreshToken', refreshToken);
                     localStorage.setItem('user', JSON.stringify(userData));
                 }
             },
 
             logout: () => {
-                set({ user: null, token: null });
+                set({ user: null, token: null, refreshToken: null });
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('token');
+                    localStorage.removeItem('refreshToken');
                     localStorage.removeItem('user');
                 }
             },

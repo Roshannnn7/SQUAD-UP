@@ -16,7 +16,8 @@ import {
     FiPaperclip,
     FiArrowLeft,
     FiUsers,
-    FiSettings
+    FiSettings,
+    FiCpu
 } from 'react-icons/fi';
 
 export default function ProjectChatPage() {

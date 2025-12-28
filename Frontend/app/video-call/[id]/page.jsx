@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import socketService from '@/lib/socket';
 import { useAuth } from '@/components/auth-provider';
 import api from '@/lib/axios';
-import Peer from 'simple-peer';
+import SimplePeer from 'simple-peer';
 import {
     FiMic,
     FiMicOff,
@@ -14,9 +14,10 @@ import {
     FiVideoOff,
     FiPhoneMissed,
     FiMonitor,
-    FiMaximize,
     FiX,
-    FiMessageSquare
+    FiMessageSquare,
+    FiUser,
+    FiDownload
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -26,6 +27,7 @@ export default function VideoCallPage() {
     const router = useRouter();
 
     const [stream, setStream] = useState(null);
+    const [screenStream, setScreenStream] = useState(null);
     const [receivingCall, setReceivingCall] = useState(false);
     const [caller, setCaller] = useState('');
     const [callerSignal, setCallerSignal] = useState();
@@ -36,10 +38,17 @@ export default function VideoCallPage() {
 
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
+    const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatMessages, setChatMessages] = useState([]);
+    const [chatInput, setChatInput] = useState('');
+    const [isRecording, setIsRecording] = useState(false);
 
     const myVideo = useRef();
     const userVideo = useRef();
     const connectionRef = useRef();
+    const mediaRecorderRef = useRef();
+    const recordedChunksRef = useRef([]);
     const [booking, setBooking] = useState(null);
 
     useEffect(() => {
@@ -50,7 +59,10 @@ export default function VideoCallPage() {
                 const otherUserId = user.role === 'student' ? res.data.mentor._id : res.data.student._id;
                 setIdToCall(otherUserId);
 
-                const currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const currentStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720 }, 
+                    audio: { echoCancellation: true, noiseSuppression: true } 
+                });
                 setStream(currentStream);
                 if (myVideo.current) {
                     myVideo.current.srcObject = currentStream;
@@ -66,6 +78,18 @@ export default function VideoCallPage() {
                     setName(data.name);
                     setCallerSignal(data.offer);
                 });
+
+                socketService.on('call-message', (data) => {
+                    setChatMessages(prev => [...prev, data]);
+                });
+
+                socketService.on('screen-share-started', () => {
+                    toast.success('Screen sharing started');
+                });
+
+                socketService.on('screen-share-stopped', () => {
+                    toast.info('Screen sharing stopped');
+                });
             } catch (err) {
                 console.error('Media access error:', err);
                 toast.error('Could not access camera/microphone');
@@ -76,16 +100,24 @@ export default function VideoCallPage() {
 
         return () => {
             if (stream) stream.getTracks().forEach(track => track.stop());
+            if (screenStream) screenStream.getTracks().forEach(track => track.stop());
             socketService.off('incoming-call');
             socketService.off('call-accepted');
+            socketService.off('call-message');
         };
-    }, [bookingId]);
+    }, [bookingId, user._id]);
 
     const callUser = (id) => {
-        const peer = new Peer({
+        const peer = new SimplePeer({
             initiator: true,
             trickle: false,
             stream: stream,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
         });
 
         peer.on('signal', (data) => {
@@ -104,6 +136,11 @@ export default function VideoCallPage() {
             }
         });
 
+        peer.on('error', (err) => {
+            console.error('Peer error:', err);
+            toast.error('Connection error');
+        });
+
         socketService.on('call-accepted', (data) => {
             setCallAccepted(true);
             peer.signal(data.answer);
@@ -114,10 +151,16 @@ export default function VideoCallPage() {
 
     const answerCall = () => {
         setCallAccepted(true);
-        const peer = new Peer({
+        const peer = new SimplePeer({
             initiator: false,
             trickle: false,
             stream: stream,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
         });
 
         peer.on('signal', (data) => {
@@ -130,26 +173,155 @@ export default function VideoCallPage() {
             }
         });
 
+        peer.on('error', (err) => {
+            console.error('Peer error:', err);
+            toast.error('Connection error');
+        });
+
         peer.signal(callerSignal);
         connectionRef.current = peer;
     };
 
+    const toggleScreenShare = async () => {
+        try {
+            if (!isScreenSharing) {
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: 'always' },
+                    audio: false
+                });
+                setScreenStream(screenStream);
+                setIsScreenSharing(true);
+
+                if (myVideo.current) {
+                    myVideo.current.srcObject = screenStream;
+                }
+
+                socketService.emit('start-screen-share', { roomId: bookingId, to: idToCall });
+
+                screenStream.getTracks()[0].onended = () => {
+                    stopScreenShare();
+                };
+            } else {
+                stopScreenShare();
+            }
+        } catch (err) {
+            console.error('Screen share error:', err);
+            if (err.name !== 'NotAllowedError') {
+                toast.error('Could not start screen sharing');
+            }
+        }
+    };
+
+    const stopScreenShare = () => {
+        if (screenStream) {
+            screenStream.getTracks().forEach(track => track.stop());
+            setScreenStream(null);
+        }
+        setIsScreenSharing(false);
+
+        if (stream && myVideo.current) {
+            myVideo.current.srcObject = stream;
+        }
+
+        socketService.emit('stop-screen-share', { roomId: bookingId, to: idToCall });
+    };
+
+    const startRecording = () => {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const videoElement = userVideo.current || myVideo.current;
+
+            if (!videoElement) {
+                toast.error('No video to record');
+                return;
+            }
+
+            const recordingStream = new MediaStream([
+                ...stream.getTracks(),
+                ...(callAccepted && userVideo.current?.srcObject ? userVideo.current.srcObject.getTracks() : [])
+            ]);
+
+            const mediaRecorder = new MediaRecorder(recordingStream, {
+                mimeType: 'video/webm;codecs=vp9'
+            });
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `call-recording-${Date.now()}.webm`;
+                a.click();
+                recordedChunksRef.current = [];
+            };
+
+            mediaRecorder.start();
+            mediaRecorderRef.current = mediaRecorder;
+            setIsRecording(true);
+            toast.success('Recording started');
+        } catch (err) {
+            console.error('Recording error:', err);
+            toast.error('Could not start recording');
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            toast.success('Recording saved');
+        }
+    };
+
+    const sendChatMessage = () => {
+        if (!chatInput.trim()) return;
+
+        const message = {
+            sender: user._id,
+            senderName: user.fullName,
+            content: chatInput,
+            timestamp: new Date()
+        };
+
+        socketService.emit('send-call-message', {
+            to: idToCall,
+            ...message
+        });
+
+        setChatMessages(prev => [...prev, message]);
+        setChatInput('');
+    };
+
     const leaveCall = () => {
         setCallEnded(true);
+        if (isRecording) stopRecording();
+        if (isScreenSharing) stopScreenShare();
         if (connectionRef.current) connectionRef.current.destroy();
+        if (stream) stream.getTracks().forEach(track => track.stop());
         router.push('/bookings');
     };
 
     const toggleMute = () => {
         const audioTrack = stream.getAudioTracks()[0];
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsMuted(!audioTrack.enabled);
+        if (audioTrack) {
+            audioTrack.enabled = !audioTrack.enabled;
+            setIsMuted(!audioTrack.enabled);
+        }
     };
 
     const toggleVideo = () => {
         const videoTrack = stream.getVideoTracks()[0];
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoOff(!videoTrack.enabled);
+        if (videoTrack) {
+            videoTrack.enabled = !videoTrack.enabled;
+            setIsVideoOff(!videoTrack.enabled);
+        }
     };
 
     return (
@@ -187,6 +359,11 @@ export default function VideoCallPage() {
                                 <FiVideoOff className="w-6 h-6 text-gray-500" />
                             </div>
                         )}
+                        {isScreenSharing && (
+                            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                                SCREEN SHARING
+                            </div>
+                        )}
                     </div>
 
                     {/* Incoming Call Toast */}
@@ -210,11 +387,19 @@ export default function VideoCallPage() {
                             </motion.div>
                         )}
                     </AnimatePresence>
+
+                    {/* Recording Indicator */}
+                    {isRecording && (
+                        <div className="absolute top-6 left-6 bg-red-600 text-white px-4 py-2 rounded-full font-bold animate-pulse flex items-center space-x-2">
+                            <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                            <span>Recording</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Sidebar Info & Controls */}
                 <div className="lg:col-span-1 flex flex-col gap-4">
-                    <div className="glassmorphism bg-white/5 border-white/10 p-8 rounded-[40px] flex-1 text-white">
+                    <div className="glassmorphism bg-white/5 border-white/10 p-8 rounded-[40px] flex-1 text-white overflow-y-auto max-h-96">
                         <h3 className="text-sm font-bold text-primary-500 uppercase tracking-widest mb-4">Session Info</h3>
                         <div className="space-y-6">
                             <div>
@@ -226,42 +411,94 @@ export default function VideoCallPage() {
                                 <p className="text-lg font-bold">{booking?.startTime} - {booking?.endTime}</p>
                             </div>
                             <div className="pt-6 border-t border-white/10 mt-6">
-                                <p className="text-xs text-green-500 font-bold uppercase mb-2">Meeting Live</p>
+                                <p className="text-xs text-green-500 font-bold uppercase mb-2">Meeting Status</p>
                                 <div className="p-4 bg-white/5 rounded-2xl text-xs space-y-2">
-                                    <p className="flex justify-between"><span>Status:</span> <span className="text-green-400">Connected</span></p>
-                                    <p className="flex justify-between"><span>Encryption:</span> <span>AES-256</span></p>
+                                    <p className="flex justify-between"><span>Status:</span> <span className={callAccepted ? 'text-green-400' : 'text-yellow-400'}>{callAccepted ? 'Connected' : 'Waiting'}</span></p>
+                                    <p className="flex justify-between"><span>Recording:</span> <span className={isRecording ? 'text-red-400' : 'text-gray-400'}>{isRecording ? 'On' : 'Off'}</span></p>
+                                    <p className="flex justify-between"><span>Screen:</span> <span className={isScreenSharing ? 'text-purple-400' : 'text-gray-400'}>{isScreenSharing ? 'Sharing' : 'Off'}</span></p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Call Controls */}
-                    <div className="flex lg:flex-wrap items-center justify-center gap-4 p-6 bg-white/5 rounded-[40px] border border-white/10">
+                    <div className="flex lg:flex-wrap items-center justify-center gap-3 p-6 bg-white/5 rounded-[40px] border border-white/10">
                         <button
                             onClick={toggleMute}
-                            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${isMuted ? 'bg-red-500/20 text-red-500' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                            title="Mute/Unmute"
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isMuted ? 'bg-red-500/20 text-red-500' : 'bg-white/10 text-white hover:bg-white/20'}`}
                         >
-                            {isMuted ? <FiMicOff className="w-6 h-6" /> : <FiMic className="w-6 h-6" />}
+                            {isMuted ? <FiMicOff className="w-5 h-5" /> : <FiMic className="w-5 h-5" />}
                         </button>
                         <button
                             onClick={toggleVideo}
-                            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${isVideoOff ? 'bg-red-500/20 text-red-500' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                            title="Video On/Off"
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isVideoOff ? 'bg-red-500/20 text-red-500' : 'bg-white/10 text-white hover:bg-white/20'}`}
                         >
-                            {isVideoOff ? <FiVideoOff className="w-6 h-6" /> : <FiVideo className="w-6 h-6" />}
+                            {isVideoOff ? <FiVideoOff className="w-5 h-5" /> : <FiVideo className="w-5 h-5" />}
                         </button>
-                        <button className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white/10 text-white hover:bg-white/20">
-                            <FiMonitor className="w-6 h-6" />
+                        <button
+                            onClick={toggleScreenShare}
+                            title="Screen Share"
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isScreenSharing ? 'bg-purple-500/20 text-purple-500' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                        >
+                            <FiMonitor className="w-5 h-5" />
                         </button>
-                        <button className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white/10 text-white hover:bg-white/20">
-                            <FiMessageSquare className="w-6 h-6" />
+                        <button
+                            onClick={isRecording ? stopRecording : startRecording}
+                            title={isRecording ? 'Stop Recording' : 'Start Recording'}
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isRecording ? 'bg-red-500/30 text-red-500' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                        >
+                            <FiDownload className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => setChatOpen(!chatOpen)}
+                            title="Chat"
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${chatOpen ? 'bg-blue-500/20 text-blue-500' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                        >
+                            <FiMessageSquare className="w-5 h-5" />
                         </button>
                         <button
                             onClick={leaveCall}
-                            className="w-14 h-14 rounded-2xl flex items-center justify-center bg-red-600 text-white hover:bg-red-700 transition-all shadow-lg shadow-red-500/40"
+                            title="End Call"
+                            className="w-12 h-12 rounded-xl flex items-center justify-center bg-red-600 text-white hover:bg-red-700 transition-all shadow-lg shadow-red-500/40"
                         >
-                            <FiPhoneMissed className="w-6 h-6" />
+                            <FiPhoneMissed className="w-5 h-5" />
                         </button>
                     </div>
+
+                    {/* Chat Panel */}
+                    {chatOpen && (
+                        <div className="glassmorphism bg-white/5 border-white/10 p-4 rounded-[40px] flex flex-col h-64">
+                            <h3 className="text-sm font-bold text-white mb-3">Chat</h3>
+                            <div className="flex-1 overflow-y-auto space-y-3 mb-3">
+                                {chatMessages.map((msg, idx) => (
+                                    <div key={idx} className={`flex ${msg.sender === user._id ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`px-3 py-2 rounded-lg text-xs ${msg.sender === user._id ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-100'}`}>
+                                            <p className="font-bold text-xs mb-1">{msg.senderName}</p>
+                                            <p>{msg.content}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                                    placeholder="Type message..."
+                                    className="flex-1 px-3 py-2 text-xs bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none"
+                                />
+                                <button
+                                    onClick={sendChatMessage}
+                                    className="px-4 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
+                                >
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

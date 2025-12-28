@@ -34,7 +34,7 @@ const studentProfileSchema = mongoose.Schema(
         }],
         githubProfile: {
             type: String,
-            required: true,
+            default: '',
         },
         linkedinProfile: {
             type: String,

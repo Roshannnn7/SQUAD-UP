@@ -1,12 +1,13 @@
 const Message = require('../models/Message');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 const initializeSocket = (io) => {
     io.on('connection', (socket) => {
         console.log('New client connected:', socket.id);
 
-        // Join user room for private messages
+        // Join user room for private messages & calls
         socket.on('join-user', (userId) => {
             socket.join(`user-${userId}`);
             console.log(`User ${userId} joined their room`);
@@ -79,6 +80,7 @@ const initializeSocket = (io) => {
         // Video call signaling
         socket.on('call-user', (data) => {
             const { to, offer, callerId, callerName, roomId } = data;
+            console.log(`Call from ${callerId} to ${to}`);
             io.to(`user-${to}`).emit('incoming-call', {
                 from: callerId,
                 name: callerName,
@@ -89,6 +91,7 @@ const initializeSocket = (io) => {
 
         socket.on('call-accepted', (data) => {
             const { to, answer } = data;
+            console.log(`Call accepted, sending answer to ${to}`);
             io.to(`user-${to}`).emit('call-accepted', { answer });
         });
 
@@ -107,10 +110,107 @@ const initializeSocket = (io) => {
             io.to(`user-${to}`).emit('call-ended');
         });
 
+        // Screen sharing
+        socket.on('start-screen-share', (data) => {
+            const { roomId, to } = data;
+            console.log(`Screen sharing started in room ${roomId}`);
+            io.to(`user-${to}`).emit('screen-share-started', { from: socket.id });
+            io.to(roomId).emit('screen-share-started');
+        });
+
+        socket.on('stop-screen-share', (data) => {
+            const { roomId, to } = data;
+            console.log(`Screen sharing stopped in room ${roomId}`);
+            io.to(`user-${to}`).emit('screen-share-stopped');
+            io.to(roomId).emit('screen-share-stopped');
+        });
+
+        // In-call messaging (chat during call)
+        socket.on('send-call-message', async (data) => {
+            try {
+                const { to, sender, senderName, content } = data;
+                console.log(`Call message from ${senderName} to ${to}`);
+                
+                io.to(`user-${to}`).emit('call-message', {
+                    sender,
+                    senderName,
+                    content,
+                    timestamp: new Date()
+                });
+            } catch (error) {
+                console.error('Error sending call message:', error);
+                socket.emit('error', { message: 'Failed to send message' });
+            }
+        });
+
+        // Notifications
+        socket.on('send-notification', async (data) => {
+            try {
+                const { userId, type, message, relatedId } = data;
+                
+                // Save to database
+                const notification = await Notification.create({
+                    user: userId,
+                    type,
+                    message,
+                    relatedModel: relatedId ? relatedId.model : null,
+                    relatedId: relatedId ? relatedId.id : null,
+                });
+
+                // Emit to user
+                io.to(`user-${userId}`).emit('new-notification', notification);
+            } catch (error) {
+                console.error('Error sending notification:', error);
+            }
+        });
+
+        // Squad updates (real-time collaboration)
+        socket.on('update-squad-status', (data) => {
+            const { squadId, status, userId } = data;
+            io.to(`project-${squadId}`).emit('squad-status-update', {
+                userId,
+                status,
+                timestamp: new Date()
+            });
+        });
+
+        socket.on('update-task-status', (data) => {
+            const { squadId, taskId, status, assignedTo } = data;
+            io.to(`project-${squadId}`).emit('task-update', {
+                taskId,
+                status,
+                assignedTo,
+                timestamp: new Date()
+            });
+        });
+
+        // Presence indicators (who's online)
+        socket.on('user-active', (userId) => {
+            socket.broadcast.emit('user-online', { userId, socketId: socket.id });
+        });
+
+        socket.on('user-typing', (data) => {
+            const { roomId, userId, userName } = data;
+            io.to(`project-${roomId}`).emit('user-typing-indicator', {
+                userId,
+                userName,
+                isTyping: true
+            });
+        });
+
+        socket.on('user-stop-typing', (data) => {
+            const { roomId, userId } = data;
+            io.to(`project-${roomId}`).emit('user-typing-indicator', {
+                userId,
+                isTyping: false
+            });
+        });
+
         // Join video call room
         socket.on('join-call-room', (roomId) => {
             socket.join(`call-${roomId}`);
             socket.to(`call-${roomId}`).emit('user-joined', socket.id);
+            console.log(`User joined call room: ${roomId}`);
         });
 
         // Leave video call room
@@ -119,20 +219,10 @@ const initializeSocket = (io) => {
             socket.to(`call-${roomId}`).emit('user-left', socket.id);
         });
 
-        // Screen sharing
-        socket.on('start-screen-share', (data) => {
-            const { roomId, streamId } = data;
-            socket.to(`call-${roomId}`).emit('screen-share-started', { streamId });
-        });
-
-        socket.on('stop-screen-share', (data) => {
-            const { roomId } = data;
-            socket.to(`call-${roomId}`).emit('screen-share-stopped');
-        });
-
         // Disconnect
         socket.on('disconnect', () => {
             console.log('Client disconnected:', socket.id);
+            socket.broadcast.emit('user-offline', socket.id);
         });
     });
 };

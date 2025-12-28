@@ -60,7 +60,7 @@ export default function RegisterPage() {
             });
 
             // Store token and user data
-            login(response.data, response.data.token);
+            login(response.data, response.data.token, response.data.refreshToken);
 
             toast.success('Account created successfully!');
             router.push('/onboarding');
@@ -84,7 +84,7 @@ export default function RegisterPage() {
                 role: 'student',
             });
 
-            login(response.data, response.data.token);
+            login(response.data, response.data.token, response.data.refreshToken);
             toast.success('Account created with Google successfully!');
             router.push('/onboarding');
         } catch (error) {
@@ -192,6 +192,7 @@ export default function RegisterPage() {
                                     placeholder="••••••••"
                                     required
                                     disabled={isLoading}
+                                    minLength={6}
                                 />
                                 <button
                                     type="button"
@@ -200,6 +201,26 @@ export default function RegisterPage() {
                                 >
                                     {showPassword ? <FiEyeOff /> : <FiEye />}
                                 </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Confirm Password
+                            </label>
+                            <div className="relative">
+                                <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    className="input-field pl-10 pr-10"
+                                    placeholder="••••••••"
+                                    required
+                                    disabled={isLoading}
+                                    minLength={6}
+                                />
                             </div>
                         </div>
 

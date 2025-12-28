@@ -28,11 +28,42 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Clear token and redirect to login
+    async (error) => {
+        const originalRequest = error.config;
+
+        // If token expired, try to refresh it
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+
+            try {
+                const refreshToken = localStorage.getItem('refreshToken');
+                if (refreshToken) {
+                    const response = await axios.post(`${API_URL}/auth/refresh`, {
+                        refreshToken,
+                    });
+
+                    const newAccessToken = response.data.token;
+                    localStorage.setItem('token', newAccessToken);
+                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+                    // Retry original request with new token
+                    return api(originalRequest);
+                }
+            } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
+                // Clear auth data and redirect to login
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('user');
+                    window.location.href = '/auth/login';
+                }
+            }
+        } else if (error.response?.status === 401) {
+            // Refresh token also expired, logout
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
                 localStorage.removeItem('user');
                 window.location.href = '/auth/login';
             }

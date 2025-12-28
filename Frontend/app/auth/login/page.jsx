@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiGithub } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '../../../lib/firebase';
+import { signInWithEmailAndPassword, signInWithPopup, GithubAuthProvider } from 'firebase/auth';
+import { auth, googleProvider, githubProvider } from '../../../lib/firebase';
 import api from '../../../lib/axios';
 import { useAuth } from '../../../components/auth-provider';
 import toast from 'react-hot-toast';
@@ -35,6 +35,37 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
+            // Try local login first (for admin with email/password)
+            try {
+                const response = await api.post('/auth/login', {
+                    email: formData.email,
+                    password: formData.password,
+                });
+
+                // Store token and user data
+                login(response.data, response.data.token, response.data.refreshToken);
+                toast.success('Logged in successfully!');
+
+                // Redirect based on role
+                switch (response.data.role) {
+                    case 'student':
+                        router.push('/dashboard/student');
+                        break;
+                    case 'mentor':
+                        router.push('/dashboard/mentor');
+                        break;
+                    case 'admin':
+                        router.push('/dashboard/admin');
+                        break;
+                    default:
+                        router.push('/dashboard/student');
+                }
+                return;
+            } catch (localError) {
+                // If local login fails, try Firebase
+                console.log('Local login failed, trying Firebase...');
+            }
+
             // Sign in with Firebase
             const userCredential = await signInWithEmailAndPassword(
                 auth,
@@ -50,7 +81,7 @@ export default function LoginPage() {
             });
 
             // Store token and user data
-            login(response.data, response.data.token);
+            login(response.data, response.data.token, response.data.refreshToken);
 
             toast.success('Logged in successfully!');
 
@@ -89,7 +120,7 @@ export default function LoginPage() {
                 firebaseToken,
             });
 
-            login(response.data, response.data.token);
+            login(response.data, response.data.token, response.data.refreshToken);
             toast.success('Logged in with Google successfully!');
 
             if (!response.data.isProfileComplete) {
@@ -110,6 +141,43 @@ export default function LoginPage() {
         } catch (error) {
             console.error('Google login error:', error);
             toast.error('Failed to login with Google.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGithubLogin = async () => {
+        setIsLoading(true);
+
+        try {
+            const result = await signInWithPopup(auth, githubProvider);
+            const firebaseToken = await result.user.getIdToken();
+
+            const response = await api.post('/auth/verify', {
+                firebaseToken,
+            });
+
+            login(response.data, response.data.token, response.data.refreshToken);
+            toast.success('Logged in with GitHub successfully!');
+
+            if (!response.data.isProfileComplete) {
+                router.push('/onboarding');
+            } else {
+                switch (response.data.role) {
+                    case 'student':
+                        router.push('/dashboard/student');
+                        break;
+                    case 'mentor':
+                        router.push('/dashboard/mentor');
+                        break;
+                    case 'admin':
+                        router.push('/dashboard/admin');
+                        break;
+                }
+            }
+        } catch (error) {
+            console.error('GitHub login error:', error);
+            toast.error('Failed to login with GitHub.');
         } finally {
             setIsLoading(false);
         }
@@ -211,6 +279,7 @@ export default function LoginPage() {
                             </button>
 
                             <button
+                                onClick={handleGithubLogin}
                                 disabled={isLoading}
                                 className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 
                          rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 
