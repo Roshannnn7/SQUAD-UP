@@ -44,3 +44,27 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+.next/
+# Node modules
+node_modules/
+
+# Environment files
+.env.local
+.env.production
+.env.development
+
+# Build output
+.next/
+out/
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS + IDE junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
