@@ -38,7 +38,7 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
     .map(o => o.trim())
     .filter(Boolean);
 
-const allowVercelWildcard = process.env.ALLOW_VERCEL_WILDCARD === 'true';
+const allowVercelWildcard = process.env.ALLOW_VERCEL_WILDCARD === 'false' ? false : true;
 
 const isOriginAllowed = (origin) => {
     if (!origin) return true;
@@ -83,6 +83,8 @@ app.use(cors({
         return callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 // Ensure preflight requests always succeed
 app.options('*', cors({
@@ -91,6 +93,8 @@ app.options('*', cors({
         return callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 200,
 }));
 app.use(express.json());
