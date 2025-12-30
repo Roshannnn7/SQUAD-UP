@@ -111,6 +111,15 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/video-calls', videoCallRoutes);
+// Duplicate mounts without /api prefix in case platform routing strips /api
+app.use('/auth', authRoutes);
+app.use('/mentors', mentorRoutes);
+app.use('/bookings', bookingRoutes);
+app.use('/projects', projectRoutes);
+app.use('/admin', adminRoutes);
+app.use('/notifications', notificationRoutes);
+app.use('/messages', messageRoutes);
+app.use('/video-calls', videoCallRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
