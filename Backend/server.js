@@ -78,20 +78,14 @@ const limiter = rateLimit({
 // Apply middleware
 app.use(helmet());
 app.use(cors({
-    origin: (origin, callback) => {
-        if (isOriginAllowed(origin)) return callback(null, true);
-        return callback(new Error('Not allowed by CORS'), false);
-    },
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 // Ensure preflight requests always succeed
 app.options('*', cors({
-    origin: (origin, callback) => {
-        if (isOriginAllowed(origin)) return callback(null, true);
-        return callback(new Error('Not allowed by CORS'), false);
-    },
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
