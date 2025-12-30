@@ -54,6 +54,9 @@ const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
     message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.method === 'OPTIONS',
 });
 
 // Apply middleware
@@ -61,6 +64,12 @@ app.use(helmet());
 app.use(cors({
     origin: allowedOrigins,
     credentials: true,
+}));
+// Ensure preflight requests always succeed
+app.options('*', cors({
+    origin: allowedOrigins,
+    credentials: true,
+    optionsSuccessStatus: 200,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -85,6 +94,10 @@ app.use('/api/video-calls', videoCallRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+// Also expose health under /api for platform checks
+app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
