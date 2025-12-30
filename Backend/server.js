@@ -33,10 +33,13 @@ const initializeSocket = require('./socket/socketHandler');
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim());
+console.log('Allowed Origins:', allowedOrigins);
+
 // Initialize Socket.IO with CORS
 const io = socketIo(server, {
     cors: {
-        origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim()),
+        origin: allowedOrigins,
         methods: ['GET', 'POST'],
         credentials: true,
     },
@@ -56,7 +59,7 @@ const limiter = rateLimit({
 // Apply middleware
 app.use(helmet());
 app.use(cors({
-    origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim()),
+    origin: allowedOrigins,
     credentials: true,
 }));
 app.use(express.json());

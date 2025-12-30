@@ -10,11 +10,14 @@ import { signInWithEmailAndPassword, signInWithPopup, GithubAuthProvider } from 
 import { auth, googleProvider, githubProvider } from '../../../lib/firebase';
 import api from '../../../lib/axios';
 import { useAuth } from '../../../components/auth-provider';
+import { useTheme } from '../../../components/theme-provider';
+import { FiSun, FiMoon } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
     const router = useRouter();
     const { login } = useAuth();
+    const { theme, toggleTheme } = useTheme();
 
     const [formData, setFormData] = useState({
         email: '',
@@ -184,7 +187,14 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
+            <button
+                onClick={toggleTheme}
+                className="absolute top-4 right-4 p-2 rounded-full bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Toggle theme"
+            >
+                {theme === 'dark' ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+            </button>
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
