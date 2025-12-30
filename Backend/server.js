@@ -120,6 +120,10 @@ app.get('/health', (req, res) => {
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+// Root endpoint for quick verification
+app.get('/', (req, res) => {
+    res.status(200).send('OK');
+});
 
 // Error handling middleware
 app.use(errorHandler);
