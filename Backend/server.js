@@ -33,17 +33,33 @@ const initializeSocket = require('./socket/socketHandler');
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim());
-console.log('Allowed Origins:', allowedOrigins);
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
+
+const allowVercelWildcard = process.env.ALLOW_VERCEL_WILDCARD === 'true';
+
+const isOriginAllowed = (origin) => {
+    if (!origin) return true;
+    if (allowedOrigins.includes(origin)) return true;
+    if (origin === 'http://localhost:3000') return true;
+    if (allowVercelWildcard && /^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/.test(origin)) return true;
+    return false;
+};
+
+console.log('Allowed Origins:', allowedOrigins, 'ALLOW_VERCEL_WILDCARD:', allowVercelWildcard);
 
 // Initialize Socket.IO with CORS
 const io = socketIo(server, {
-    cors: {
-        origin: allowedOrigins,
-        methods: ['GET', 'POST'],
-        credentials: true,
-    },
     transports: ['websocket', 'polling'],
+    allowRequest: (req, callback) => {
+        const origin = req.headers.origin;
+        if (isOriginAllowed(origin)) {
+            return callback(null, true);
+        }
+        return callback('Not allowed by Socket.IO CORS', false);
+    },
 });
 
 // Initialize socket handler
@@ -62,12 +78,18 @@ const limiter = rateLimit({
 // Apply middleware
 app.use(helmet());
 app.use(cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+        if (isOriginAllowed(origin)) return callback(null, true);
+        return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
 }));
 // Ensure preflight requests always succeed
 app.options('*', cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+        if (isOriginAllowed(origin)) return callback(null, true);
+        return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
     optionsSuccessStatus: 200,
 }));
