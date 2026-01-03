@@ -13,7 +13,9 @@ const {
 } = require('../controllers/projectController');
 const { protect } = require('../middleware/auth');
 
+// Public routes
 router.get('/', getProjects);
+router.get('/my', protect, getMyProjects); // Specific route BEFORE dynamic :id
 router.get('/:id', getProjectById);
 
 // Protected routes
@@ -23,6 +25,5 @@ router.delete('/:id', protect, deleteProject);
 router.post('/:id/join', protect, joinProject);
 router.post('/:id/leave', protect, leaveProject);
 router.put('/:id/progress', protect, updateProgress);
-router.get('/my/projects', protect, getMyProjects);
 
 module.exports = router;

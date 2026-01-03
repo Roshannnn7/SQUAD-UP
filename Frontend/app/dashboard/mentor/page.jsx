@@ -29,6 +29,7 @@ export default function MentorDashboard() {
     }, []);
 
     const fetchDashboardData = async () => {
+        if (!user || (user.role !== 'mentor' && user.role !== 'admin')) return;
         try {
             setLoading(true);
             const [statsRes, bookingsRes] = await Promise.all([

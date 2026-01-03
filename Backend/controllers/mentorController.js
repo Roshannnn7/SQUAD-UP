@@ -194,8 +194,15 @@ const getMentorStats = asyncHandler(async (req, res) => {
     const mentorProfile = await MentorProfile.findOne({ user: req.user._id });
 
     if (!mentorProfile) {
-        res.status(404);
-        throw new Error('Mentor profile not found');
+        return res.json({
+            totalBookings: 0,
+            pendingBookings: 0,
+            upcomingBookings: 0,
+            monthlyEarnings: 0,
+            rating: 5,
+            totalSessions: 0,
+            recentBookings: []
+        });
     }
 
     const now = new Date();
@@ -252,8 +259,7 @@ const getMyAvailability = asyncHandler(async (req, res) => {
     const mentorProfile = await MentorProfile.findOne({ user: req.user._id });
 
     if (!mentorProfile) {
-        res.status(404);
-        throw new Error('Mentor profile not found');
+        return res.json([]);
     }
 
     const availability = await Availability.find({

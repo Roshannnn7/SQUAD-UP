@@ -29,7 +29,7 @@ app.set('trust proxy', 1);
 // Initialize Socket.IO with comprehensive configuration for production reliability (especially on Render)
 const io = socketIo(server, {
     path: '/socket.io/',
-    transports: ['websocket', 'polling'],
+    transports: ['polling', 'websocket'],
     cors: {
         origin: true,
         credentials: true,
@@ -45,8 +45,9 @@ initializeSocket(io);
 // NUCLEAR FIX: Disable COOP to guarantee Google Login popups can communicate
 app.use(helmet({
     crossOriginOpenerPolicy: false,
-    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false,
 }));
 
 // Robust Universal CORS
