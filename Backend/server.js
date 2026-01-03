@@ -2,17 +2,13 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const http = require('http');
 const socketIo = require('socket.io');
 
 // Load environment variables
 dotenv.config();
 
-// Import database connection
 const connectDB = require('./config/db');
-
-// Import routes
 const authRoutes = require('./routes/authRoutes');
 const mentorRoutes = require('./routes/mentorRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
@@ -21,117 +17,54 @@ const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const videoCallRoutes = require('./routes/videoCallRoutes');
-
-// Import middleware
-const { protect } = require('./middleware/auth');
 const errorHandler = require('./middleware/error');
-
-// Import socket handler
 const initializeSocket = require('./socket/socketHandler');
 
-// Initialize Express app
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
-    .split(',')
-    .map(o => o.trim())
-    .filter(Boolean);
+// Essential for Render
+app.set('trust proxy', 1);
 
-const allowVercelWildcard = process.env.ALLOW_VERCEL_WILDCARD === 'false' ? false : true;
-
-const isOriginAllowed = (origin) => {
-    if (!origin) return true;
-    if (allowedOrigins.includes(origin)) return true;
-    if (origin === 'http://localhost:3000') return true;
-    // Better regex for Vercel URLs (handles preview URLs with dots/dashes)
-    if (allowVercelWildcard && /^https:\/\/[a-zA-Z0-9.-]+\.vercel\.app$/.test(origin)) return true;
-    return false;
-};
-
-console.log('Allowed Origins:', allowedOrigins, 'ALLOW_VERCEL_WILDCARD:', allowVercelWildcard);
-
-// Initialize Socket.IO with CORS
+// Initialize Socket.IO with wide CORS for reliability
 const io = socketIo(server, {
     transports: ['websocket', 'polling'],
-    allowRequest: (req, callback) => {
-        const origin = req.headers.origin;
-        if (isOriginAllowed(origin)) {
-            return callback(null, true);
-        }
-        return callback('Not allowed by Socket.IO CORS', false);
-    },
+    cors: { origin: true, credentials: true }
 });
-
-// Initialize socket handler
 initializeSocket(io);
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false,
-    skip: (req) => req.method === 'OPTIONS',
-});
-
-// Apply middleware
+// NUCLEAR FIX: Disable COOP to guarantee Google Login popups can communicate
 app.use(helmet({
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Fix for Google Login Popups
-    contentSecurityPolicy: false, // Disable CSP for now to prevent blocking external assets
+    crossOriginOpenerPolicy: false,
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: false,
 }));
 
-// Force CORS headers for every response, including 404/500
+// Robust Universal CORS
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin && isOriginAllowed(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    } else {
-        res.setHeader('Access-Control-Allow-Origin', 'https://squadup-roshannnn7.vercel.app'); // Default fallback
-    }
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
     next();
 });
 
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || isOriginAllowed(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-// Ensure preflight requests always succeed
-app.options('*', cors({
-    origin: true,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    optionsSuccessStatus: 200,
-}));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
-app.use('/api', limiter);
 
 // Connect to MongoDB
 connectDB();
 
-// API Routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/mentors', mentorRoutes);
 app.use('/api/bookings', bookingRoutes);
@@ -140,55 +73,17 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/video-calls', videoCallRoutes);
-// Duplicate mounts without /api prefix in case platform routing strips /api
+
+// Duplicate mounts for platform flexibility
 app.use('/auth', authRoutes);
-app.use('/mentors', mentorRoutes);
-app.use('/bookings', bookingRoutes);
-app.use('/projects', projectRoutes);
-app.use('/admin', adminRoutes);
-app.use('/notifications', notificationRoutes);
-app.use('/messages', messageRoutes);
-app.use('/video-calls', videoCallRoutes);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-// Also expose health under /api for platform checks
-app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-// Root endpoint for quick verification
-app.get('/', (req, res) => {
-    res.status(200).send('OK');
-});
+app.get('/health', (req, res) => res.status(200).json({ status: 'OK' }));
+app.get('/', (req, res) => res.status(200).send('SquadUp Backend Live'));
 
-// Error handling middleware
 app.use(errorHandler);
+app.use('*', (req, res) => res.status(404).json({ message: 'Endpoint not found' }));
 
-// 404 handler
-app.use('*', (req, res) => {
-    res.status(404).json({ message: 'Endpoint not found' });
-});
-
-// Start server with explicit host and improved logging
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || '0.0.0.0';
-
-server.on('error', (err) => {
-    console.error('Server error:', err);
-});
-
-server.listen(PORT, HOST, () => {
-    const addr = server.address();
-    const host = addr.address === '::' ? '0.0.0.0' : addr.address;
-    console.log(`Server running on http://${host}:${addr.port} in ${process.env.NODE_ENV || 'development'} mode`);
-});
-
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
-});
-
-process.on('unhandledRejection', (reason) => {
-    console.error('Unhandled Rejection:', reason);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
 });
