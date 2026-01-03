@@ -40,11 +40,13 @@ export default function LoginPage() {
         try {
             // Try local login first (for admin with email/password)
             try {
+                console.log('Attempting local login...');
                 const response = await api.post('/auth/login', {
                     email: formData.email,
                     password: formData.password,
                 });
 
+                console.log('Local login successful:', response.data);
                 // Store token and user data
                 login(response.data, response.data.token, response.data.refreshToken);
                 toast.success('Logged in successfully!');
@@ -66,7 +68,8 @@ export default function LoginPage() {
                 return;
             } catch (localError) {
                 // If local login fails, try Firebase
-                console.log('Local login failed, trying Firebase...');
+                console.log('Local login failed:', localError.response?.data || localError.message);
+                console.log('Trying Firebase authentication...');
             }
 
             // Sign in with Firebase
@@ -76,13 +79,16 @@ export default function LoginPage() {
                 formData.password
             );
 
+            console.log('Firebase sign-in successful');
             const firebaseToken = await userCredential.user.getIdToken();
 
             // Verify with backend
+            console.log('Verifying with backend...');
             const response = await api.post('/auth/verify', {
                 firebaseToken,
             });
 
+            console.log('Backend verification successful:', response.data);
             // Store token and user data
             login(response.data, response.data.token, response.data.refreshToken);
 
@@ -106,7 +112,27 @@ export default function LoginPage() {
             }
         } catch (error) {
             console.error('Login error:', error);
-            toast.error('Failed to login. Please check your credentials.');
+
+            // More specific error messages
+            let errorMessage = 'Failed to login. Please check your credentials.';
+
+            if (error.response) {
+                // Server responded with error
+                errorMessage = error.response.data?.message || errorMessage;
+                console.error('Server error:', error.response.status, error.response.data);
+            } else if (error.code === 'auth/user-not-found') {
+                errorMessage = 'No account found with this email.';
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = 'Incorrect password.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = 'Invalid email address.';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = 'Too many failed attempts. Please try again later.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            toast.error(errorMessage);
         } finally {
             setIsLoading(false);
         }

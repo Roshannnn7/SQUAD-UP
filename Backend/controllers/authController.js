@@ -24,29 +24,39 @@ const generateRefreshToken = (id) => {
 // @route   POST /api/auth/login
 // @access  Public
 const loginLocal = asyncHandler(async (req, res) => {
+    console.log('=== LOGIN REQUEST ===');
+    console.log('Body:', req.body);
+    console.log('Headers:', req.headers);
+
     const { email, password } = req.body;
 
     if (!email || !password) {
+        console.log('Missing email or password');
         res.status(400);
         throw new Error('Please provide email and password');
     }
 
+    console.log('Looking for user with email:', email);
     // Find user with password field
     const user = await User.findOne({ email }).select('+password');
 
     if (!user || !user.password) {
+        console.log('User not found or no password set');
         res.status(401);
         throw new Error('Invalid credentials');
     }
 
+    console.log('User found:', user.email, 'Role:', user.role);
     // Compare password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+        console.log('Password invalid');
         res.status(401);
         throw new Error('Invalid credentials');
     }
 
+    console.log('Password valid, generating tokens');
     // Update last login
     user.lastLogin = new Date();
     await user.save();
@@ -55,6 +65,7 @@ const loginLocal = asyncHandler(async (req, res) => {
     const accessToken = generateToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
+    console.log('Login successful for:', user.email);
     res.json({
         _id: user._id,
         email: user.email,
@@ -71,17 +82,23 @@ const loginLocal = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/verify
 // @access  Public
 const verifyFirebaseToken = asyncHandler(async (req, res) => {
+    console.log('=== FIREBASE VERIFICATION REQUEST ===');
+    console.log('Body:', req.body);
+
     const { firebaseToken, role } = req.body;
 
     try {
+        console.log('Verifying Firebase token...');
         // Verify Firebase token
         const decodedToken = await firebaseAdmin.auth().verifyIdToken(firebaseToken);
         const { uid, email, name, picture } = decodedToken;
+        console.log('Firebase token verified for:', email);
 
         // Check if user exists
         let user = await User.findOne({ firebaseUid: uid });
 
         if (user) {
+            console.log('Existing user found:', user.email);
             // Update last login
             user.lastLogin = new Date();
             await user.save();
@@ -97,6 +114,7 @@ const verifyFirebaseToken = asyncHandler(async (req, res) => {
             const accessToken = generateToken(user._id);
             const refreshToken = generateRefreshToken(user._id);
 
+            console.log('Login successful for existing user:', user.email);
             res.json({
                 _id: user._id,
                 email: user.email,
@@ -109,6 +127,7 @@ const verifyFirebaseToken = asyncHandler(async (req, res) => {
                 refreshToken,
             });
         } else {
+            console.log('Creating new user for:', email);
             // Create new user
             user = await User.create({
                 firebaseUid: uid,
@@ -121,6 +140,7 @@ const verifyFirebaseToken = asyncHandler(async (req, res) => {
             const accessToken = generateToken(user._id);
             const refreshToken = generateRefreshToken(user._id);
 
+            console.log('New user created:', user.email);
             res.status(201).json({
                 _id: user._id,
                 email: user.email,
