@@ -44,7 +44,8 @@ const isOriginAllowed = (origin) => {
     if (!origin) return true;
     if (allowedOrigins.includes(origin)) return true;
     if (origin === 'http://localhost:3000') return true;
-    if (allowVercelWildcard && /^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/.test(origin)) return true;
+    // Better regex for Vercel URLs (handles preview URLs with dots/dashes)
+    if (allowVercelWildcard && /^https:\/\/[a-zA-Z0-9.-]+\.vercel\.app$/.test(origin)) return true;
     return false;
 };
 
@@ -76,11 +77,19 @@ const limiter = rateLimit({
 });
 
 // Apply middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Fix for Google Login Popups
+    contentSecurityPolicy: false, // Disable CSP for now to prevent blocking external assets
+}));
+
 // Force CORS headers for every response, including 404/500
 app.use((req, res, next) => {
-    const origin = req.headers.origin || '*';
-    res.setHeader('Access-Control-Allow-Origin', origin);
+    const origin = req.headers.origin;
+    if (isOriginAllowed(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', 'https://squadup-roshannnn7.vercel.app'); // Default fallback
+    }
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -90,8 +99,15 @@ app.use((req, res, next) => {
     }
     next();
 });
+
 app.use(cors({
-    origin: true,
+    origin: (origin, callback) => {
+        if (!origin || isOriginAllowed(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
