@@ -123,6 +123,7 @@ export default function OnboardingPage() {
                 <div className="glassmorphism rounded-2xl p-8 shadow-xl">
                     {user.role === 'student' ? (
                         <form onSubmit={submitStudentProfile} className="space-y-6">
+                            {/* ... student form content ... */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -265,7 +266,7 @@ export default function OnboardingPage() {
                                 {isLoading ? 'Saving...' : 'Complete Student Profile'}
                             </button>
                         </form>
-                    ) : (
+                    ) : user.role === 'mentor' ? (
                         <form onSubmit={submitMentorProfile} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
@@ -412,6 +413,13 @@ export default function OnboardingPage() {
                                 {isLoading ? 'Saving...' : 'Complete Mentor Profile'}
                             </button>
                         </form>
+                    ) : (
+                        <div className="text-center py-12">
+                            <p className="text-gray-600 dark:text-gray-400 mb-4">Role not recognized. Please sign out and try again.</p>
+                            <button onClick={() => window.location.href = '/auth/login'} className="btn-secondary">
+                                Go to Login
+                            </button>
+                        </div>
                     )}
                 </div>
             </motion.div>
