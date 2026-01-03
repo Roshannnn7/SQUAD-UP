@@ -34,7 +34,7 @@ export default function StudentDashboard() {
                     api.get('/projects/my'),
                     api.get('/bookings?type=upcoming'),
                     api.get('/mentors?limit=3'),
-                    api.get('/notifications/unread/count')
+                    api.get('/notifications/unread-count')
                 ]);
                 setProjects(projectsRes.data);
                 setBookings(bookingsRes.data);

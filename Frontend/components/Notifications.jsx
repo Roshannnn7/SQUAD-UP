@@ -24,7 +24,7 @@ export default function Notifications() {
         try {
             const res = await api.get('/notifications');
             setNotifications(res.data);
-            const unread = await api.get('/notifications/unread/count');
+            const unread = await api.get('/notifications/unread-count');
             setUnreadCount(unread.data.count);
         } catch (error) {
             console.error('Fetch notifications error:', error);
@@ -43,7 +43,7 @@ export default function Notifications() {
 
     const markAllRead = async () => {
         try {
-            await api.put('/notifications/read/all');
+            await api.put('/notifications/read-all');
             setNotifications(notifications.map(n => ({ ...n, isRead: true })));
             setUnreadCount(0);
         } catch (error) {

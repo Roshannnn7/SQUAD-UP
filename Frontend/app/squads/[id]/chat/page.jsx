@@ -10,7 +10,6 @@ import { useAuth } from '@/components/auth-provider';
 import toast from 'react-hot-toast';
 import {
     FiSend,
-    FiMoreVertical,
     FiPlus,
     FiSmile,
     FiPaperclip,
@@ -29,43 +28,63 @@ export default function ProjectChatPage() {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
+    const [typingUsers, setTypingUsers] = useState([]);
     const messagesEndRef = useRef(null);
+    const typingTimeoutRef = useRef(null);
 
     useEffect(() => {
         fetchProjectAndMessages();
 
         // Connect socket
         const token = localStorage.getItem('token');
-        const socket = socketService.connect(token);
-
+        socketService.connect(token);
         socketService.joinProjectRoom(id);
 
         const handleNewMessage = (message) => {
-            setMessages((prev) => [...prev, message]);
-            scrollToBottom();
+            setMessages((prev) => {
+                // Prevent duplicate messages
+                if (prev.some(m => m._id === message._id)) return prev;
+                return [...prev, message];
+            });
+            setTimeout(scrollToBottom, 50);
+        };
+
+        const handleTypingIndicator = (data) => {
+            if (data.userId === user?._id) return;
+
+            setTypingUsers((prev) => {
+                if (data.isTyping) {
+                    if (prev.find(u => u.id === data.userId)) return prev;
+                    return [...prev, { id: data.userId, name: data.userName }];
+                } else {
+                    return prev.filter(u => u.id !== data.userId);
+                }
+            });
         };
 
         socketService.on('new-project-message', handleNewMessage);
+        socketService.on('user-typing-indicator', handleTypingIndicator);
 
         return () => {
             socketService.leaveProjectRoom(id);
             socketService.off('new-project-message');
+            socketService.off('user-typing-indicator');
         };
-    }, [id]);
+    }, [id, user?._id]);
 
     const fetchProjectAndMessages = async () => {
         try {
             setLoading(true);
             const [projectRes, messagesRes] = await Promise.all([
                 api.get(`/projects/${id}`),
-                api.get(`/api/messages/project/${id}`)
+                api.get(`/messages/project/${id}`)
             ]);
             setProject(projectRes.data);
             setMessages(messagesRes.data);
             setTimeout(scrollToBottom, 100);
         } catch (error) {
             console.error('Fetch error:', error);
-            toast.error('Failed to load chat.');
+            toast.error('Failed to load chat history.');
         } finally {
             setLoading(false);
         }
@@ -75,13 +94,38 @@ export default function ProjectChatPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const handleTyping = (e) => {
+        setNewMessage(e.target.value);
+
+        socketService.emit('user-typing', {
+            roomId: id,
+            userId: user?._id,
+            userName: user?.fullName
+        });
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+        typingTimeoutRef.current = setTimeout(() => {
+            socketService.emit('user-stop-typing', {
+                roomId: id,
+                userId: user?._id
+            });
+        }, 2000);
+    };
+
     const handleSendMessage = (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
 
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        socketService.emit('user-stop-typing', {
+            roomId: id,
+            userId: user?._id
+        });
+
         socketService.sendProjectMessage({
             projectId: id,
-            senderId: user._id,
+            senderId: user?._id,
             content: newMessage,
             messageType: 'text'
         });
@@ -103,9 +147,9 @@ export default function ProjectChatPage() {
 
             <div className="flex-1 max-w-7xl mx-auto w-full flex mt-16 overflow-hidden">
                 {/* Chat Area */}
-                <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 shadow-xl overflow-hidden">
+                <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 shadow-xl overflow-hidden relative">
                     {/* Header */}
-                    <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between z-10 bg-white dark:bg-gray-800">
                         <div className="flex items-center space-x-4">
                             <button
                                 onClick={() => router.push(`/squads/${id}`)}
@@ -134,12 +178,14 @@ export default function ProjectChatPage() {
                         </div>
                     </div>
 
-                    {/* Messages */}
+                    {/* Messages Container */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                         {messages.map((msg, idx) => {
                             const isMe = msg.sender?._id === user?._id;
                             return (
-                                <div
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
                                     key={msg._id || idx}
                                     className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                                 >
@@ -158,23 +204,47 @@ export default function ProjectChatPage() {
                                         )}
                                         <div
                                             className={`p-3 rounded-2xl text-sm ${isMe
-                                                    ? 'bg-primary-600 text-white rounded-br-none'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'
+                                                ? 'bg-primary-600 text-white rounded-br-none'
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'
                                                 }`}
                                         >
                                             {msg.content}
                                         </div>
                                         <p className={`text-[10px] text-gray-400 mt-1 ${isMe ? 'text-right' : 'text-left'}`}>
-                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sending...'}
                                         </p>
                                     </div>
-                                </div>
+                                </motion.div>
                             );
                         })}
+
+                        {/* Typing Indicators */}
+                        <AnimatePresence>
+                            {typingUsers.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    className="flex items-center space-x-2 text-xs text-gray-400 ml-10 italic"
+                                >
+                                    <div className="flex space-x-1">
+                                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></span>
+                                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                                    </div>
+                                    <span>
+                                        {typingUsers.length === 1
+                                            ? `${typingUsers[0].name} is typing...`
+                                            : `${typingUsers.length} people are typing...`}
+                                    </span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Input */}
+                    {/* Input Field */}
                     <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
                         <form onSubmit={handleSendMessage} className="flex items-center space-x-4">
                             <button type="button" className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
@@ -184,9 +254,9 @@ export default function ProjectChatPage() {
                                 <input
                                     type="text"
                                     placeholder="Type a message..."
-                                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full px-5 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full px-5 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all shadow-sm"
                                     value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    onChange={handleTyping}
                                 />
                                 <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
                                     <FiSmile className="w-5 h-5" />
@@ -194,7 +264,8 @@ export default function ProjectChatPage() {
                             </div>
                             <button
                                 type="submit"
-                                className="p-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-all active:scale-95"
+                                disabled={!newMessage.trim()}
+                                className="p-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-all active:scale-95 disabled:opacity-50"
                             >
                                 <FiSend className="w-5 h-5" />
                             </button>

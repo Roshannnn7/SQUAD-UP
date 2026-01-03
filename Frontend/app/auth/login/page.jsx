@@ -94,8 +94,8 @@ export default function LoginPage() {
 
             toast.success('Logged in successfully!');
 
-            // Redirect based on profile completion
-            if (!response.data.isProfileComplete) {
+            // Redirect based on profile completion and role
+            if (!response.data.isProfileComplete && response.data.role !== 'admin') {
                 router.push('/onboarding');
             } else {
                 switch (response.data.role) {
@@ -108,6 +108,8 @@ export default function LoginPage() {
                     case 'admin':
                         router.push('/dashboard/admin');
                         break;
+                    default:
+                        router.push('/dashboard/student');
                 }
             }
         } catch (error) {
@@ -152,7 +154,7 @@ export default function LoginPage() {
             login(response.data, response.data.token, response.data.refreshToken);
             toast.success('Logged in with Google successfully!');
 
-            if (!response.data.isProfileComplete) {
+            if (!response.data.isProfileComplete && response.data.role !== 'admin') {
                 router.push('/onboarding');
             } else {
                 switch (response.data.role) {
@@ -189,7 +191,7 @@ export default function LoginPage() {
             login(response.data, response.data.token, response.data.refreshToken);
             toast.success('Logged in with GitHub successfully!');
 
-            if (!response.data.isProfileComplete) {
+            if (!response.data.isProfileComplete && response.data.role !== 'admin') {
                 router.push('/onboarding');
             } else {
                 switch (response.data.role) {

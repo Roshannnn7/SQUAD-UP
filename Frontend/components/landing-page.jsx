@@ -60,7 +60,12 @@ const testimonials = [
 ];
 
 export default function LandingPage() {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
+
+    const getDashboardHref = () => {
+        if (!user || !user.role) return '/dashboard';
+        return `/dashboard/${user.role}`;
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -97,7 +102,7 @@ export default function LandingPage() {
                                     </Link>
                                 </>
                             ) : (
-                                <Link href="/dashboard" className="btn-primary text-lg px-8 py-4">
+                                <Link href={getDashboardHref()} className="btn-primary text-lg px-8 py-4">
                                     Go to Dashboard
                                 </Link>
                             )}
@@ -223,7 +228,7 @@ export default function LandingPage() {
                             </Link>
                         ) : (
                             <Link
-                                href="/dashboard"
+                                href={getDashboardHref()}
                                 className="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-bold rounded-lg 
                          hover:bg-gray-100 transition-all duration-300 text-lg"
                             >

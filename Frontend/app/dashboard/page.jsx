@@ -12,22 +12,31 @@ export default function DashboardRedirect() {
         if (isInitialized) {
             if (!user) {
                 router.push('/auth/login');
-            } else if (!user.isProfileComplete) {
+                return;
+            }
+
+            // Admins don't need onboarding
+            if (user.role === 'admin') {
+                router.push('/dashboard/admin');
+                return;
+            }
+
+            // For students and mentors, check if profile is complete
+            if (!user.isProfileComplete) {
                 router.push('/onboarding');
-            } else {
-                switch (user.role) {
-                    case 'student':
-                        router.push('/dashboard/student');
-                        break;
-                    case 'mentor':
-                        router.push('/dashboard/mentor');
-                        break;
-                    case 'admin':
-                        router.push('/dashboard/admin');
-                        break;
-                    default:
-                        router.push('/dashboard/student');
-                }
+                return;
+            }
+
+            // Redirect based on role if profile is complete
+            switch (user.role) {
+                case 'student':
+                    router.push('/dashboard/student');
+                    break;
+                case 'mentor':
+                    router.push('/dashboard/mentor');
+                    break;
+                default:
+                    router.push('/dashboard/student');
             }
         }
     }, [user, isInitialized, router]);

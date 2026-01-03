@@ -26,10 +26,19 @@ const server = http.createServer(app);
 // Essential for Render
 app.set('trust proxy', 1);
 
-// Initialize Socket.IO with wide CORS for reliability
+// Initialize Socket.IO with comprehensive configuration for production reliability (especially on Render)
 const io = socketIo(server, {
+    path: '/socket.io/',
     transports: ['websocket', 'polling'],
-    cors: { origin: true, credentials: true }
+    cors: {
+        origin: true,
+        credentials: true,
+        methods: ["GET", "POST"]
+    },
+    allowEIO3: true,
+    connectTimeout: 45000,
+    pingTimeout: 30000,
+    pingInterval: 25000
 });
 initializeSocket(io);
 

@@ -130,7 +130,7 @@ const initializeSocket = (io) => {
             try {
                 const { to, sender, senderName, content } = data;
                 console.log(`Call message from ${senderName} to ${to}`);
-                
+
                 io.to(`user-${to}`).emit('call-message', {
                     sender,
                     senderName,
@@ -147,7 +147,7 @@ const initializeSocket = (io) => {
         socket.on('send-notification', async (data) => {
             try {
                 const { userId, type, message, relatedId } = data;
-                
+
                 // Save to database
                 const notification = await Notification.create({
                     user: userId,
@@ -190,20 +190,37 @@ const initializeSocket = (io) => {
         });
 
         socket.on('user-typing', (data) => {
-            const { roomId, userId, userName } = data;
-            io.to(`project-${roomId}`).emit('user-typing-indicator', {
-                userId,
-                userName,
-                isTyping: true
-            });
+            const { roomId, receiverId, userId, userName } = data;
+            if (roomId) {
+                // Project room typing
+                io.to(`project-${roomId}`).emit('user-typing-indicator', {
+                    userId,
+                    userName,
+                    isTyping: true
+                });
+            } else if (receiverId) {
+                // Private chat typing
+                io.to(`user-${receiverId}`).emit('user-typing-indicator', {
+                    userId,
+                    userName,
+                    isTyping: true
+                });
+            }
         });
 
         socket.on('user-stop-typing', (data) => {
-            const { roomId, userId } = data;
-            io.to(`project-${roomId}`).emit('user-typing-indicator', {
-                userId,
-                isTyping: false
-            });
+            const { roomId, receiverId, userId } = data;
+            if (roomId) {
+                io.to(`project-${roomId}`).emit('user-typing-indicator', {
+                    userId,
+                    isTyping: false
+                });
+            } else if (receiverId) {
+                io.to(`user-${receiverId}`).emit('user-typing-indicator', {
+                    userId,
+                    isTyping: false
+                });
+            }
         });
 
         // Join video call room
