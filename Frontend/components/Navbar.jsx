@@ -25,9 +25,22 @@ export default function Navbar() {
     const { theme, toggleTheme } = useTheme();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const router = useRouter();
+
+    const handleLogout = () => {
+        logout();
+        setIsProfileOpen(false);
+        setIsMobileMenuOpen(false);
+        router.push('/auth/login');
+    };
+
+    const getDashboardHref = () => {
+        if (!user || !user.role) return '/auth/login';
+        return `/dashboard/${user.role}`;
+    };
 
     const navLinks = [
-        { name: 'Dashboard', href: `/dashboard/${user?.role}`, icon: <FiHome /> },
+        { name: 'Dashboard', href: getDashboardHref(), icon: <FiHome /> },
         { name: 'Squads', href: '/squads', icon: <FiUsers /> },
         { name: 'Mentors', href: '/mentors', icon: <FiBookOpen /> },
         { name: 'Messages', href: '/messages', icon: <FiMessageSquare /> },
@@ -75,7 +88,7 @@ export default function Navbar() {
                                 className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold">
-                                    {user?.fullName?.charAt(0)}
+                                    {user?.fullName?.charAt(0) || <FiUser />}
                                 </div>
                             </button>
 
@@ -89,7 +102,7 @@ export default function Navbar() {
                                     >
                                         <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                                             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                                {user?.fullName}
+                                                {user?.fullName || 'User'}
                                             </p>
                                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                                 {user?.email}
@@ -98,13 +111,14 @@ export default function Navbar() {
                                         <Link
                                             href="/profile"
                                             className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                            onClick={() => setIsProfileOpen(false)}
                                         >
                                             <FiUser />
                                             <span>Profile Settings</span>
                                         </Link>
                                         <button
-                                            onClick={logout}
-                                            className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
+                                            onClick={handleLogout}
+                                            className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
                                         >
                                             <FiLogOut />
                                             <span>Logout</span>
@@ -157,7 +171,7 @@ export default function Navbar() {
                                     <span className="font-medium">Toggle Theme</span>
                                 </button>
                                 <button
-                                    onClick={logout}
+                                    onClick={handleLogout}
                                     className="flex items-center space-x-3 w-full px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
                                 >
                                     <span className="text-xl"><FiLogOut /></span>
