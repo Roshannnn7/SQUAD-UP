@@ -4,16 +4,19 @@ if (!admin.apps.length) {
     try {
         let config;
 
-        // Recursive scrubber to remove ALL hidden characters/newlines from config strings
+        // Specialized scrubber: Cleans project IDs but PROTECTS Private Key newlines
         const scrubObj = (obj) => {
             const clean = Array.isArray(obj) ? [] : {};
             for (const key in obj) {
+                const lowerKey = key.toLowerCase();
                 if (typeof obj[key] === 'string') {
-                    // Remove ALL whitespace and newlines for most keys
-                    clean[key] = obj[key].trim().replace(/[\r\n\t]/g, "");
-                    // Special case: Preserve internal newlines ONLY for private_key
-                    if (key.toLowerCase() === 'private_key') {
+                    if (lowerKey === 'private_key' || lowerKey === 'privatekey') {
+                        // CRITICAL: Private Keys MUST have newlines. 
+                        // We replace literal "\n" with real newlines and KEEP existing ones.
                         clean[key] = obj[key].trim().replace(/\\n/g, '\n');
+                    } else {
+                        // For Project ID and Emails, remove ALL hidden characters/newlines
+                        clean[key] = obj[key].trim().replace(/[\r\n\t ]/g, "");
                     }
                 } else if (typeof obj[key] === 'object' && obj[key] !== null) {
                     clean[key] = scrubObj(obj[key]);
@@ -38,7 +41,7 @@ if (!admin.apps.length) {
         }
 
         const projectID = config.projectId || config.project_id;
-        console.log(`Final scrubbing check - Project ID: [${projectID}]`);
+        console.log(`Initialization Check - Project ID: [${projectID}]`);
 
         admin.initializeApp({
             credential: admin.credential.cert(config),
