@@ -27,10 +27,15 @@ export default function RootLayout({ children }) {
                             position="top-right"
                             toastOptions={{
                                 duration: 4000,
+                                className: 'dark:bg-gray-800 dark:text-white dark:border-gray-700',
                                 style: {
-                                    background: 'white',
-                                    color: 'black',
-                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                                    background: 'rgba(255, 255, 255, 0.8)',
+                                    backdropFilter: 'blur(12px)',
+                                    color: '#1f2937',
+                                    border: '1px solid rgba(229, 231, 235, 0.5)',
                                 },
                             }}
                         />

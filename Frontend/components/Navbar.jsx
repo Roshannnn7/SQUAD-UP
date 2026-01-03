@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from './auth-provider';
 import { useTheme } from './theme-provider';
 import { motion, AnimatePresence } from 'framer-motion';
