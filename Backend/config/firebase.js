@@ -7,9 +7,15 @@ if (!admin.apps.length) {
         // Try to load from a single JSON string (Render style)
         if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
             console.log('Using FIREBASE_SERVICE_ACCOUNT_KEY JSON string');
-            config = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+            // Trim the whole string to remove hidden newlines at start/end
+            const rawJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
+            config = JSON.parse(rawJson);
 
-            // Fix private key formatting if it was stringified poorly
+            // Specifically trim the project_id if it exists
+            if (config.project_id) config.project_id = config.project_id.trim();
+            if (config.projectId) config.projectId = config.projectId.trim();
+
+            // Fix private key formatting
             if (config.private_key) {
                 config.private_key = config.private_key.replace(/\\n/g, '\n');
             }

@@ -85,7 +85,7 @@ app.use(helmet({
 // Force CORS headers for every response, including 404/500
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (isOriginAllowed(origin)) {
+    if (origin && isOriginAllowed(origin)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
     } else {
         res.setHeader('Access-Control-Allow-Origin', 'https://squadup-roshannnn7.vercel.app'); // Default fallback
