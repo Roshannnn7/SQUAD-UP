@@ -18,7 +18,8 @@ import {
     FiCalendar,
     FiCheckCircle,
     FiTrello,
-    FiVideo
+    FiVideo,
+    FiLogOut
 } from 'react-icons/fi';
 import Link from 'next/link';
 
@@ -30,6 +31,7 @@ export default function ProjectDetailsPage() {
     const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isJoining, setIsJoining] = useState(false);
+    const [isLeaving, setIsLeaving] = useState(false);
 
     useEffect(() => {
         fetchProjectDetails();
@@ -59,6 +61,22 @@ export default function ProjectDetailsPage() {
             toast.error(error.response?.data?.message || 'Failed to join project.');
         } finally {
             setIsJoining(false);
+        }
+    };
+
+    const handleLeave = async () => {
+        if (!window.confirm('Are you sure you want to leave this squad?')) return;
+
+        try {
+            setIsLeaving(true);
+            await api.post(`/projects/${id}/leave`);
+            toast.success('Left squad successfully.');
+            fetchProjectDetails();
+        } catch (error) {
+            console.error('Leave error:', error);
+            toast.error(error.response?.data?.message || 'Failed to leave squad.');
+        } finally {
+            setIsLeaving(false);
         }
     };
 
@@ -204,8 +222,20 @@ export default function ProjectDetailsPage() {
                                     {isJoining ? 'Joining...' : project.members?.length >= project.maxMembers ? 'Squad Full' : 'Join Squad'}
                                 </button>
                             ) : (
-                                <div className="text-center p-4 bg-green-50 dark:bg-green-900/10 rounded-2xl text-green-700 font-bold">
-                                    You are a member!
+                                <div className="space-y-4">
+                                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/10 rounded-2xl text-green-700 font-bold border border-green-100 dark:border-green-800">
+                                        You are a member!
+                                    </div>
+                                    {!isLeader && (
+                                        <button
+                                            onClick={handleLeave}
+                                            disabled={isLeaving}
+                                            className="w-full flex items-center justify-center gap-2 py-4 bg-red-50 text-red-600 rounded-2xl font-bold hover:bg-red-100 transition-colors"
+                                        >
+                                            <FiLogOut />
+                                            {isLeaving ? 'Leaving...' : 'Leave Squad'}
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </motion.div>

@@ -5,6 +5,8 @@ const User = require('../models/User');
 const StudentProfile = require('../models/StudentProfile');
 const MentorProfile = require('../models/MentorProfile');
 const firebaseAdmin = require('../config/firebase');
+const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
 
 // Generate JWT Token (short-lived access token)
 const generateToken = (id) => {
@@ -330,6 +332,88 @@ const getUserProfile = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Forgot Password - Send OTP
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Set OTP and expiration (10 minutes)
+    user.resetPasswordOtp = otp;
+    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    const message = `
+        <div style="font-family: Arial, sans-serif; max-w-md mx-auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #333;">Password Reset Request</h2>
+            <p>You requested a password reset. Please use the following OTP to reset your password:</p>
+            <div style="background-color: #f4f4f4; padding: 10px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                ${otp}
+            </div>
+            <p>This OTP is valid for 10 minutes.</p>
+            <p>If you didn't request this, please ignore this email.</p>
+        </div>
+    `;
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: 'SquadUp - Password Reset OTP',
+            message,
+        });
+
+        res.json({ message: 'OTP sent to email' });
+    } catch (error) {
+        console.error(error);
+        user.resetPasswordOtp = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+        res.status(500);
+        throw new Error('Email could not be sent');
+    }
+});
+
+// @desc    Reset Password
+// @route   POST /api/auth/reset-password
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+
+    const user = await User.findOne({
+        email,
+        resetPasswordOtp: otp,
+        resetPasswordExpires: { $gt: Date.now() },
+    }).select('+password');
+
+    if (!user) {
+        res.status(400);
+        throw new Error('Invalid OTP or OTP has expired');
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    // Clear OTP fields
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.json({ message: 'Password reset successful' });
+});
+
 // @desc    Refresh access token
 // @route   POST /api/auth/refresh
 // @access  Public
@@ -370,4 +454,6 @@ module.exports = {
     getUserProfile,
     refreshAccessToken,
     loginLocal,
+    forgotPassword,
+    resetPassword,
 };

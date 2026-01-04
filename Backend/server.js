@@ -32,11 +32,21 @@ const io = socketIo(server, {
     transports: ['polling', 'websocket'],
     cors: {
         origin: function (origin, callback) {
-            // Allow all origins in development or specific patterns in production
-            if (!origin || origin.includes('vercel.app') || origin.includes('localhost') || origin.includes('render.com')) {
+            const allowedOrigins = [
+                'http://localhost:3000',
+                'http://localhost:5000',
+                'https://squadup-roshannnn7.vercel.app',
+                ...(process.env.ALLOWED_ORIGINS?.split(',') || [])
+            ];
+
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+
+            // Loose matching for subdomains or dev environments
+            if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('vercel.app') || origin.includes('localhost')) {
                 callback(null, true);
             } else {
-                callback(null, true); // Fallback to true for safety during transition
+                callback(null, true); // Permissive fallback for troubleshooting
             }
         },
         credentials: true,
@@ -60,7 +70,16 @@ app.use(helmet({
 // Robust Universal CORS
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin || origin.includes('vercel.app') || origin.includes('localhost') || origin.includes('render.com')) {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:5000',
+            'https://squadup-roshannnn7.vercel.app',
+            ...(process.env.ALLOWED_ORIGINS?.split(',') || [])
+        ];
+
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('vercel.app') || origin.includes('localhost')) {
             callback(null, true);
         } else {
             callback(null, true);
