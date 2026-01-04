@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import api from '@/lib/axios';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
     collection,
     query,
@@ -134,22 +135,36 @@ export default function ProjectChatPage() {
         const file = e.target.files[0];
         if (!file) return;
 
-        toast.success(`Uploading ${file.name}... (Simulated)`);
+        const toastId = toast.loading(`Uploading ${file.name}...`);
 
         try {
+            // Create a reference to the file in Firebase Storage
+            const fileRef = ref(storage, `squads/${id}/files/${Date.now()}_${file.name}`);
+
+            // Upload the file
+            const snapshot = await uploadBytes(fileRef, file);
+
+            // Get the download URL
+            const downloadURL = await getDownloadURL(snapshot.ref);
+
             await addDoc(
                 collection(db, "squads", id, "messages"),
                 {
                     text: `📎 Attached file: ${file.name}`,
+                    fileUrl: downloadURL,
+                    fileName: file.name,
+                    fileType: file.type,
                     senderId: user?._id,
                     senderName: user?.fullName,
                     senderPhoto: user?.profilePhoto,
                     createdAt: serverTimestamp(),
-                    messageType: 'file'
+                    messageType: file.type.startsWith('image/') ? 'image' : 'file'
                 }
             );
+            toast.success('File uploaded!', { id: toastId });
         } catch (error) {
             console.error('File upload error:', error);
+            toast.error('Upload failed.', { id: toastId });
         }
     };
 
@@ -284,7 +299,28 @@ export default function ProjectChatPage() {
                                                 : 'bg-white dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-100 dark:border-gray-600/30'
                                                 }`}
                                         >
-                                            <p className="leading-relaxed font-medium">{msg.content}</p>
+                                            {msg.messageType === 'image' && msg.fileUrl ? (
+                                                <div className="-mx-2 -mt-2 mb-2">
+                                                    <img
+                                                        src={msg.fileUrl}
+                                                        alt="Attached image"
+                                                        className="max-w-[250px] sm:max-w-sm rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
+                                                        onClick={() => window.open(msg.fileUrl, '_blank')}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <p className="leading-relaxed font-medium">{msg.content}</p>
+                                            )}
+                                            {msg.messageType === 'file' && msg.fileUrl && (
+                                                <a
+                                                    href={msg.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={`flex items-center gap-2 mt-2 text-xs font-bold uppercase tracking-wider ${isMe ? 'text-white/80 hover:text-white' : 'text-primary-500 hover:text-primary-600'}`}
+                                                >
+                                                    <FiPaperclip className="w-3 h-3" /> Download Attachment
+                                                </a>
+                                            )}
                                         </div>
                                         <div className={`flex items-center gap-2 mt-1.5 px-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">
