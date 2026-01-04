@@ -38,6 +38,9 @@ export default function ProjectChatPage() {
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
+    const isLeaderVar = project?.creator?._id === user?._id;
+    const isMember = project?.members?.some(m => m.user._id === user?._id);
+
     useEffect(() => {
         fetchProjectAndMessages();
 
@@ -178,8 +181,6 @@ export default function ProjectChatPage() {
             setIsLeaving(false);
         }
     };
-
-    const isLeader = project?.creator?._id === user?._id;
 
     if (loading) {
         return (
@@ -450,7 +451,8 @@ export default function ProjectChatPage() {
                         </div>
 
                         {/* Leave Squad Option in Chat Sidebar */}
-                        {!isLeader && (
+                        {/* Leave Squad Option in Chat Sidebar */}
+                        {!isLeaderVar && (
                             <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800">
                                 <button
                                     onClick={handleLeave}
