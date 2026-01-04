@@ -30,28 +30,13 @@ app.set('trust proxy', 1);
 const io = socketIo(server, {
     path: '/socket.io/',
     transports: ['polling', 'websocket'],
-    cors: {
-        origin: function (origin, callback) {
-            const allowedOrigins = [
-                'http://localhost:3000',
-                'http://localhost:5000',
-                'https://squadup-roshannnn7.vercel.app',
-                ...(process.env.ALLOWED_ORIGINS?.split(',') || [])
-            ];
-
-            // Allow requests with no origin (like mobile apps or curl requests)
-            if (!origin) return callback(null, true);
-
-            // Loose matching for subdomains or dev environments
-            if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('vercel.app') || origin.includes('localhost')) {
-                callback(null, true);
-            } else {
-                callback(null, true); // Permissive fallback for troubleshooting
-            }
-        },
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-    },
+    origin: [
+        "http://localhost:3000",
+        "http://localhost:5000",
+        "https://squadup-roshannnn7.vercel.app",
+        "https://squadup-azure.vercel.app",
+        "https://squad-up-sfhn.onrender.com"
+    ],
     allowEIO3: true,
     connectTimeout: 45000,
     pingTimeout: 30000,
@@ -69,22 +54,13 @@ app.use(helmet({
 
 // Robust Universal CORS
 app.use(cors({
-    origin: function (origin, callback) {
-        const allowedOrigins = [
-            'http://localhost:3000',
-            'http://localhost:5000',
-            'https://squadup-roshannnn7.vercel.app',
-            ...(process.env.ALLOWED_ORIGINS?.split(',') || [])
-        ];
-
-        if (!origin) return callback(null, true);
-
-        if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('vercel.app') || origin.includes('localhost')) {
-            callback(null, true);
-        } else {
-            callback(null, true);
-        }
-    },
+    origin: [
+        "http://localhost:3000",
+        "http://localhost:5000",
+        "https://squadup-roshannnn7.vercel.app",
+        "https://squadup-azure.vercel.app",
+        "https://squad-up-sfhn.onrender.com"
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
