@@ -45,7 +45,6 @@ const io = socketIo(server, {
         methods: ["GET", "POST"],
         credentials: true
     },
-    transports: ["websocket"], // Force websocket on backend too
     allowEIO3: true
 });
 initializeSocket(io);
