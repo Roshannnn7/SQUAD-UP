@@ -35,18 +35,18 @@ const allowedOrigins = [
     "https://squad-up-sfhn.onrender.com"
 ];
 
-// Initialize Socket.IO with comprehensive configuration for production reliability (especially on Render)
+// Whitelisted origin (Primary Vercel URL)
+const FRONTEND_URL = "https://squadup-roshannnn7.vercel.app";
+
+// Initialize Socket.IO with the requested configuration
 const io = socketIo(server, {
-    path: '/socket.io/',
     cors: {
-        origin: allowedOrigins,
-        credentials: true,
-        methods: ["GET", "POST"]
+        origin: FRONTEND_URL,
+        methods: ["GET", "POST"],
+        credentials: true
     },
-    allowEIO3: true,
-    connectTimeout: 45000,
-    pingTimeout: 30000,
-    pingInterval: 25000
+    transports: ["websocket"], // Force websocket on backend too
+    allowEIO3: true
 });
 initializeSocket(io);
 
@@ -60,7 +60,7 @@ app.use(helmet({
 
 // Robust Universal CORS
 app.use(cors({
-    origin: allowedOrigins,
+    origin: FRONTEND_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
@@ -97,6 +97,6 @@ app.use(errorHandler);
 app.use('*', (req, res) => res.status(404).json({ message: 'Endpoint not found' }));
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });

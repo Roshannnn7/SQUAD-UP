@@ -13,11 +13,10 @@ class SocketService {
 
         this.socket = io(SOCKET_URL, {
             auth: { token },
-            path: '/socket.io/',
             transports: ['websocket'],
             withCredentials: true,
+            reconnection: true,
             reconnectionAttempts: 5,
-            timeout: 20000,
         });
 
         this.setupEventListeners();
