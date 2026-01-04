@@ -32,7 +32,9 @@ export default function ProjectChatPage() {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [typingUsers, setTypingUsers] = useState([]);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [isLeaving, setIsLeaving] = useState(false);
+    const fileInputRef = useRef(null);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
@@ -135,6 +137,31 @@ export default function ProjectChatPage() {
         });
 
         setNewMessage('');
+    };
+
+    const handleEmojiClick = (emoji) => {
+        setNewMessage(prev => prev + emoji);
+        setShowEmojiPicker(false);
+    };
+
+    const handleFileClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Implementation for file upload would go here
+        toast.success(`Uploading ${file.name}... (Simulated)`);
+
+        // Simulate a system message or attachment
+        socketService.sendProjectMessage({
+            projectId: id,
+            senderId: user?._id,
+            content: `📎 Attached file: ${file.name}`,
+            messageType: 'file'
+        });
     };
 
     const handleLeave = async () => {
@@ -320,9 +347,51 @@ export default function ProjectChatPage() {
                                     value={newMessage}
                                     onChange={handleTyping}
                                 />
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-1">
-                                    <button type="button" className="p-2 text-gray-400 hover:text-primary-500 transition-colors"><FiSmile className="w-5 h-5" /></button>
-                                    <button type="button" className="p-2 text-gray-400 hover:text-primary-500 transition-colors"><FiPaperclip className="w-5 h-5" /></button>
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                            className={`p-2 transition-colors ${showEmojiPicker ? 'text-primary-500' : 'text-gray-400 hover:text-primary-500'}`}
+                                        >
+                                            <FiSmile className="w-5 h-5" />
+                                        </button>
+
+                                        <AnimatePresence>
+                                            {showEmojiPicker && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                    exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                                                    className="absolute bottom-full right-0 mb-4 p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-3xl shadow-2xl z-50 grid grid-cols-4 gap-2"
+                                                >
+                                                    {['🔥', '🚀', '💻', '⭐', '✅', '❤️', '👍', '🙌'].map(emoji => (
+                                                        <button
+                                                            key={emoji}
+                                                            type="button"
+                                                            onClick={() => handleEmojiClick(emoji)}
+                                                            className="text-2xl hover:scale-125 transition-transform"
+                                                        >
+                                                            {emoji}
+                                                        </button>
+                                                    ))}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleFileClick}
+                                        className="p-2 text-gray-400 hover:text-primary-500 transition-colors"
+                                    >
+                                        <FiPaperclip className="w-5 h-5" />
+                                    </button>
                                 </div>
                             </div>
                             <button
@@ -401,8 +470,12 @@ export default function ProjectChatPage() {
                             </p>
                         </div>
 
-                        <button className="w-full flex items-center justify-center gap-3 py-4 bg-red-500/5 text-red-500 rounded-[22px] text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/10 hover:shadow-xl hover:shadow-red-500/20 mt-10">
-                            Terminate Connection
+                        <button
+                            onClick={handleLeave}
+                            disabled={isLeaving}
+                            className="w-full flex items-center justify-center gap-3 py-4 bg-red-500/5 text-red-500 rounded-[22px] text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/10 hover:shadow-xl hover:shadow-red-500/20 mt-10"
+                        >
+                            {isLeaving ? 'Terminating...' : 'Terminate Connection'}
                         </button>
                     </div>
                 </div>
