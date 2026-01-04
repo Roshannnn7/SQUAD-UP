@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, GithubAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -11,15 +12,10 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-console.log('Firebase Config Loaded:', {
-    apiKeyStart: firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 5) : 'MISSING',
-    authDomain: firebaseConfig.authDomain,
-    projectId: firebaseConfig.projectId
-});
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 const githubProvider = new GithubAuthProvider();
 
-export { app, auth, googleProvider, githubProvider };
+export { app, auth, db, googleProvider, githubProvider };

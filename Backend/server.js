@@ -3,7 +3,6 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const http = require('http');
-const socketIo = require('socket.io');
 
 // Load environment variables
 dotenv.config();
@@ -16,11 +15,10 @@ const projectRoutes = require('./routes/projectRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const messageRoutes = require('./routes/messageRoutes');
-const videoCallRoutes = require('./routes/videoCallRoutes');
 const errorHandler = require('./middleware/error');
-const initializeSocket = require('./socket/socketHandler');
 
 const app = express();
+const server = http.createServer(app);
 
 // Whitelisted origin (Primary Vercel URL)
 const FRONTEND_URL = "https://squadup-roshannnn7.vercel.app";
@@ -33,23 +31,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
-const server = http.createServer(app);
-
-/* 🔴 Socket.IO CORS */
-const io = socketIo(server, {
-    cors: {
-        origin: FRONTEND_URL,
-        methods: ["GET", "POST"],
-        credentials: true
-    },
-    allowEIO3: true
-});
-
 // Essential for Render
 app.set('trust proxy', 1);
-
-// Initialize socket handler
-initializeSocket(io);
 
 // NUCLEAR FIX: Disable COOP to guarantee Google Login popups can communicate
 app.use(helmet({

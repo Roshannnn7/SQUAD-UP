@@ -5,7 +5,15 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import api from '@/lib/axios';
-import socketService from '@/lib/socket';
+import { db } from '@/lib/firebase';
+import {
+    collection,
+    query,
+    orderBy,
+    onSnapshot,
+    addDoc,
+    serverTimestamp
+} from 'firebase/firestore';
 import { useAuth } from '@/components/auth-provider';
 import toast from 'react-hot-toast';
 import {
@@ -42,58 +50,42 @@ export default function ProjectChatPage() {
     const isMember = project?.members?.some(m => m.user._id === user?._id);
 
     useEffect(() => {
-        fetchProjectAndMessages();
+        fetchProject();
 
-        // Connect socket
-        const token = localStorage.getItem('token');
-        socketService.connect(token);
-        socketService.joinProjectRoom(id);
+        // Listen to messages from Firestore
+        const q = query(
+            collection(db, "squads", id, "messages"),
+            orderBy("createdAt", "asc")
+        );
 
-        const handleNewMessage = (message) => {
-            setMessages((prev) => {
-                // Prevent duplicate messages
-                if (prev.some(m => m._id === message._id)) return prev;
-                return [...prev, message];
-            });
-            setTimeout(scrollToBottom, 50);
-        };
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map(doc => ({
+                _id: doc.id,
+                ...doc.data(),
+                // Map Firebase fields to existing UI fields
+                content: doc.data().text,
+                sender: {
+                    _id: doc.data().senderId,
+                    fullName: doc.data().senderName,
+                    profilePhoto: doc.data().senderPhoto
+                },
+                createdAt: doc.data().createdAt?.toDate()
+            }));
+            setMessages(msgs);
+            setTimeout(scrollToBottom, 100);
+        });
 
-        const handleTypingIndicator = (data) => {
-            if (data.userId === user?._id) return;
-
-            setTypingUsers((prev) => {
-                if (data.isTyping) {
-                    if (prev.find(u => u.id === data.userId)) return prev;
-                    return [...prev, { id: data.userId, name: data.userName }];
-                } else {
-                    return prev.filter(u => u.id !== data.userId);
-                }
-            });
-        };
-
-        socketService.on('new-project-message', handleNewMessage);
-        socketService.on('user-typing-indicator', handleTypingIndicator);
-
-        return () => {
-            socketService.leaveProjectRoom(id);
-            socketService.off('new-project-message');
-            socketService.off('user-typing-indicator');
-        };
+        return () => unsubscribe();
     }, [id, user?._id]);
 
-    const fetchProjectAndMessages = async () => {
+    const fetchProject = async () => {
         try {
             setLoading(true);
-            const [projectRes, messagesRes] = await Promise.all([
-                api.get(`/projects/${id}`),
-                api.get(`/messages/project/${id}`)
-            ]);
-            setProject(projectRes.data);
-            setMessages(messagesRes.data);
-            setTimeout(scrollToBottom, 100);
+            const res = await api.get(`/projects/${id}`);
+            setProject(res.data);
         } catch (error) {
             console.error('Fetch error:', error);
-            toast.error('Failed to load chat history.');
+            toast.error('Failed to load project details.');
         } finally {
             setLoading(false);
         }
@@ -105,41 +97,28 @@ export default function ProjectChatPage() {
 
     const handleTyping = (e) => {
         setNewMessage(e.target.value);
-
-        socketService.emit('user-typing', {
-            roomId: id,
-            userId: user?._id,
-            userName: user?.fullName
-        });
-
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-
-        typingTimeoutRef.current = setTimeout(() => {
-            socketService.emit('user-stop-typing', {
-                roomId: id,
-                userId: user?._id
-            });
-        }, 2000);
     };
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
 
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-        socketService.emit('user-stop-typing', {
-            roomId: id,
-            userId: user?._id
-        });
-
-        socketService.sendProjectMessage({
-            projectId: id,
-            senderId: user?._id,
-            content: newMessage,
-            messageType: 'text'
-        });
-
-        setNewMessage('');
+        try {
+            await addDoc(
+                collection(db, "squads", id, "messages"),
+                {
+                    text: newMessage,
+                    senderId: user?._id,
+                    senderName: user?.fullName,
+                    senderPhoto: user?.profilePhoto,
+                    createdAt: serverTimestamp()
+                }
+            );
+            setNewMessage('');
+        } catch (error) {
+            console.error('Send message error:', error);
+            toast.error('Failed to send message.');
+        }
     };
 
     const handleEmojiClick = (emoji) => {
@@ -155,16 +134,23 @@ export default function ProjectChatPage() {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Implementation for file upload would go here
         toast.success(`Uploading ${file.name}... (Simulated)`);
 
-        // Simulate a system message or attachment
-        socketService.sendProjectMessage({
-            projectId: id,
-            senderId: user?._id,
-            content: `📎 Attached file: ${file.name}`,
-            messageType: 'file'
-        });
+        try {
+            await addDoc(
+                collection(db, "squads", id, "messages"),
+                {
+                    text: `📎 Attached file: ${file.name}`,
+                    senderId: user?._id,
+                    senderName: user?.fullName,
+                    senderPhoto: user?.profilePhoto,
+                    createdAt: serverTimestamp(),
+                    messageType: 'file'
+                }
+            );
+        } catch (error) {
+            console.error('File upload error:', error);
+        }
     };
 
     const handleLeave = async () => {

@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import api from '@/lib/axios';
 import { useAuth } from '@/components/auth-provider';
-import socketService from '@/lib/socket';
 import {
     FiSearch,
     FiMessageCircle,

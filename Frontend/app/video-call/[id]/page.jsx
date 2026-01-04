@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import socketService from '@/lib/socket';
 import { useAuth } from '@/components/auth-provider';
 import api from '@/lib/axios';
 import SimplePeer from 'simple-peer';
@@ -59,37 +58,16 @@ export default function VideoCallPage() {
                 const otherUserId = user.role === 'student' ? res.data.mentor._id : res.data.student._id;
                 setIdToCall(otherUserId);
 
-                const currentStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 1280, height: 720 }, 
-                    audio: { echoCancellation: true, noiseSuppression: true } 
+                const currentStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 1280, height: 720 },
+                    audio: { echoCancellation: true, noiseSuppression: true }
                 });
                 setStream(currentStream);
                 if (myVideo.current) {
                     myVideo.current.srcObject = currentStream;
                 }
 
-                const token = localStorage.getItem('token');
-                socketService.connect(token);
-                socketService.joinUserRoom(user._id);
-
-                socketService.on('incoming-call', (data) => {
-                    setReceivingCall(true);
-                    setCaller(data.from);
-                    setName(data.name);
-                    setCallerSignal(data.offer);
-                });
-
-                socketService.on('call-message', (data) => {
-                    setChatMessages(prev => [...prev, data]);
-                });
-
-                socketService.on('screen-share-started', () => {
-                    toast.success('Screen sharing started');
-                });
-
-                socketService.on('screen-share-stopped', () => {
-                    toast.info('Screen sharing stopped');
-                });
+                // Socket signaling removed for Firebase transition
             } catch (err) {
                 console.error('Media access error:', err);
                 toast.error('Could not access camera/microphone');
@@ -101,9 +79,6 @@ export default function VideoCallPage() {
         return () => {
             if (stream) stream.getTracks().forEach(track => track.stop());
             if (screenStream) screenStream.getTracks().forEach(track => track.stop());
-            socketService.off('incoming-call');
-            socketService.off('call-accepted');
-            socketService.off('call-message');
         };
     }, [bookingId, user._id]);
 
@@ -121,13 +96,7 @@ export default function VideoCallPage() {
         });
 
         peer.on('signal', (data) => {
-            socketService.emit('call-user', {
-                to: id,
-                offer: data,
-                callerId: user._id,
-                callerName: user.fullName,
-                roomId: bookingId
-            });
+            // socketService.emit('call-user', ...) removed
         });
 
         peer.on('stream', (userStream) => {
@@ -141,10 +110,7 @@ export default function VideoCallPage() {
             toast.error('Connection error');
         });
 
-        socketService.on('call-accepted', (data) => {
-            setCallAccepted(true);
-            peer.signal(data.answer);
-        });
+        // socketService.on('call-accepted', ...) removed
 
         connectionRef.current = peer;
     };
@@ -164,7 +130,7 @@ export default function VideoCallPage() {
         });
 
         peer.on('signal', (data) => {
-            socketService.emit('call-accepted', { to: caller, answer: data });
+            // socketService.emit('call-accepted', ...) removed
         });
 
         peer.on('stream', (userStream) => {
@@ -196,7 +162,7 @@ export default function VideoCallPage() {
                     myVideo.current.srcObject = screenStream;
                 }
 
-                socketService.emit('start-screen-share', { roomId: bookingId, to: idToCall });
+                // socketService.emit('start-screen-share', ...) removed
 
                 screenStream.getTracks()[0].onended = () => {
                     stopScreenShare();
@@ -223,7 +189,7 @@ export default function VideoCallPage() {
             myVideo.current.srcObject = stream;
         }
 
-        socketService.emit('stop-screen-share', { roomId: bookingId, to: idToCall });
+        // socketService.emit('stop-screen-share', ...) removed
     };
 
     const startRecording = () => {
@@ -290,10 +256,7 @@ export default function VideoCallPage() {
             timestamp: new Date()
         };
 
-        socketService.emit('send-call-message', {
-            to: idToCall,
-            ...message
-        });
+        // socketService.emit('send-call-message', ...) removed
 
         setChatMessages(prev => [...prev, message]);
         setChatInput('');

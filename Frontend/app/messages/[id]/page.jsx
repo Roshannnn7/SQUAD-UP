@@ -5,7 +5,17 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import api from '@/lib/axios';
-import socketService from '@/lib/socket';
+import { db } from '@/lib/firebase';
+import {
+    collection,
+    query,
+    orderBy,
+    onSnapshot,
+    addDoc,
+    serverTimestamp,
+    doc,
+    setDoc
+} from 'firebase/firestore';
 import { useAuth } from '@/components/auth-provider';
 import toast from 'react-hot-toast';
 import {
@@ -33,52 +43,39 @@ export default function PrivateChatPage() {
     const typingTimeoutRef = useRef(null);
 
     useEffect(() => {
-        fetchProfileAndMessages();
+        if (!user?._id || !id) return;
 
-        const token = localStorage.getItem('token');
-        socketService.connect(token);
-        socketService.joinUserRoom(user?._id);
+        fetchProfile();
 
-        const handleNewMessage = (message) => {
-            // Only append if it's from the other user or me to the other user
-            const senderId = typeof message.sender === 'object' ? message.sender._id : message.sender;
-            const receiverId = typeof message.receiver === 'object' ? message.receiver._id : message.receiver;
+        // Generate a unique conversation ID for two users
+        const conversationId = [user._id, id].sort().join('_');
 
-            if (senderId.toString() === id || (senderId.toString() === user?._id && receiverId.toString() === id)) {
-                setMessages((prev) => {
-                    if (prev.find(m => m._id === message._id)) return prev;
-                    return [...prev, message];
-                });
-                setTimeout(scrollToBottom, 50);
-            }
-        };
+        // Listen to messages
+        const q = query(
+            collection(db, "conversations", conversationId, "messages"),
+            orderBy("createdAt", "asc")
+        );
 
-        const handleTypingIndicator = (data) => {
-            if (data.userId === id) {
-                setIsTyping(data.isTyping);
-                setTimeout(scrollToBottom, 50);
-            }
-        };
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map(doc => ({
+                _id: doc.id,
+                ...doc.data(),
+                content: doc.data().text,
+                sender: { _id: doc.data().senderId },
+                createdAt: doc.data().createdAt?.toDate()
+            }));
+            setMessages(msgs);
+            setTimeout(scrollToBottom, 50);
+        });
 
-        socketService.on('new-private-message', handleNewMessage);
-        socketService.on('user-typing-indicator', handleTypingIndicator);
-
-        return () => {
-            socketService.off('new-private-message');
-            socketService.off('user-typing-indicator');
-        };
+        return () => unsubscribe();
     }, [id, user?._id]);
 
-    const fetchProfileAndMessages = async () => {
+    const fetchProfile = async () => {
         try {
             setLoading(true);
-            const [userRes, messagesRes] = await Promise.all([
-                api.get(`/auth/profile/${id}`).catch(() => ({ data: { fullName: 'User', _id: id } })),
-                api.get(`/messages/private/${id}`)
-            ]);
-            setOtherUser(userRes.data);
-            setMessages(messagesRes.data);
-            setTimeout(scrollToBottom, 100);
+            const res = await api.get(`/auth/profile/${id}`).catch(() => ({ data: { fullName: 'User', _id: id } }));
+            setOtherUser(res.data);
         } catch (error) {
             console.error('Fetch error:', error);
         } finally {
@@ -92,41 +89,28 @@ export default function PrivateChatPage() {
 
     const handleTyping = (e) => {
         setNewMessage(e.target.value);
-
-        socketService.emit('user-typing', {
-            receiverId: id,
-            userId: user?._id,
-            userName: user?.fullName
-        });
-
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-
-        typingTimeoutRef.current = setTimeout(() => {
-            socketService.emit('user-stop-typing', {
-                receiverId: id,
-                userId: user?._id
-            });
-        }, 2000);
     };
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
 
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-        socketService.emit('user-stop-typing', {
-            receiverId: id,
-            userId: user?._id
-        });
-
-        socketService.sendPrivateMessage({
-            receiverId: id,
-            senderId: user?._id,
-            content: newMessage,
-            messageType: 'text'
-        });
-
-        setNewMessage('');
+        try {
+            const conversationId = [user._id, id].sort().join('_');
+            await addDoc(
+                collection(db, "conversations", conversationId, "messages"),
+                {
+                    text: newMessage,
+                    senderId: user?._id,
+                    senderName: user?.fullName,
+                    createdAt: serverTimestamp()
+                }
+            );
+            setNewMessage('');
+        } catch (error) {
+            console.error('Send error:', error);
+            toast.error('Failed to send message.');
+        }
     };
 
     if (loading) {
