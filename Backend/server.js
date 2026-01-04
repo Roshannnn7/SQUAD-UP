@@ -61,7 +61,6 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/video-calls', videoCallRoutes);
 
 // Duplicate mounts for platform flexibility
 app.use('/auth', authRoutes);
