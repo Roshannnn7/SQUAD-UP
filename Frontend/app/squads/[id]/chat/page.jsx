@@ -13,7 +13,10 @@ import {
     orderBy,
     onSnapshot,
     addDoc,
-    serverTimestamp
+    serverTimestamp,
+    deleteDoc,
+    updateDoc,
+    doc
 } from 'firebase/firestore';
 import { useAuth } from '@/components/auth-provider';
 import toast from 'react-hot-toast';
@@ -28,7 +31,12 @@ import {
     FiCpu,
     FiMessageCircle,
     FiVideo,
-    FiLogOut
+    FiLogOut,
+    FiMoreVertical,
+    FiEdit2,
+    FiTrash2,
+    FiX,
+    FiCheck
 } from 'react-icons/fi';
 
 export default function ProjectChatPage() {
@@ -168,6 +176,49 @@ export default function ProjectChatPage() {
         }
     };
 
+    const [editingMessageId, setEditingMessageId] = useState(null);
+    const [editContent, setEditContent] = useState('');
+    const [showMessageMenu, setShowMessageMenu] = useState(null); // ID of message with open menu
+
+    const handleEditMessage = (msg) => {
+        setEditingMessageId(msg._id);
+        setEditContent(msg.content);
+        setShowMessageMenu(null);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingMessageId(null);
+        setEditContent('');
+    };
+
+    const handleDeleteMessage = async (msgId) => {
+        if (!window.confirm('Delete this message?')) return;
+        try {
+            await deleteDoc(doc(db, "squads", id, "messages", msgId));
+            toast.success('Message deleted');
+        } catch (error) {
+            console.error('Delete error:', error);
+            toast.error('Failed to delete message');
+        }
+        setShowMessageMenu(null);
+    };
+
+    const handleSaveEdit = async (msgId) => {
+        if (!editContent.trim()) return;
+        try {
+            await updateDoc(doc(db, "squads", id, "messages", msgId), {
+                text: editContent,
+                isEdited: true
+            });
+            setEditingMessageId(null);
+            setEditContent('');
+            toast.success('Message updated');
+        } catch (error) {
+            console.error('Update error:', error);
+            toast.error('Failed to update message');
+        }
+    };
+
     const handleLeave = async () => {
         if (!window.confirm('Are you sure you want to leave this squad?')) return;
         try {
@@ -271,6 +322,7 @@ export default function ProjectChatPage() {
                             const isMe = msg.sender?._id === user?._id;
                             const prevMsg = idx > 0 ? messages[idx - 1] : null;
                             const showAvatar = !isMe && prevMsg?.sender?._id !== msg.sender?._id;
+                            const isEditing = editingMessageId === msg._id;
 
                             return (
                                 <motion.div
@@ -287,41 +339,98 @@ export default function ProjectChatPage() {
                                             alt=""
                                         />
                                     )}
-                                    <div className={`max-w-[70%] group`}>
+                                    <div className={`max-w-[70%] group relative`}>
                                         {!isMe && showAvatar && (
                                             <p className="text-[10px] font-black text-gray-400 mb-1.5 ml-1 uppercase tracking-widest">
                                                 {msg.sender?.fullName}
                                             </p>
                                         )}
+
                                         <div
                                             className={`px-5 py-3.5 rounded-[22px] text-sm shadow-sm transition-all hover:shadow-md ${isMe
                                                 ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-br-none'
                                                 : 'bg-white dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-100 dark:border-gray-600/30'
                                                 }`}
                                         >
-                                            {msg.messageType === 'image' && msg.fileUrl ? (
-                                                <div className="-mx-2 -mt-2 mb-2">
-                                                    <img
-                                                        src={msg.fileUrl}
-                                                        alt="Attached image"
-                                                        className="max-w-[250px] sm:max-w-sm rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
-                                                        onClick={() => window.open(msg.fileUrl, '_blank')}
+                                            {isEditing ? (
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={editContent}
+                                                        onChange={(e) => setEditContent(e.target.value)}
+                                                        className="bg-white/20 text-white placeholder-white/50 border border-white/30 rounded-lg px-2 py-1 outline-none w-full"
+                                                        autoFocus
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') handleSaveEdit(msg._id);
+                                                            if (e.key === 'Escape') handleCancelEdit();
+                                                        }}
                                                     />
+                                                    <button onClick={() => handleSaveEdit(msg._id)} className="p-1 hover:bg-white/20 rounded">
+                                                        <FiCheck className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={handleCancelEdit} className="p-1 hover:bg-white/20 rounded">
+                                                        <FiX className="w-4 h-4" />
+                                                    </button>
                                                 </div>
                                             ) : (
-                                                <p className="leading-relaxed font-medium">{msg.content}</p>
-                                            )}
-                                            {msg.messageType === 'file' && msg.fileUrl && (
-                                                <a
-                                                    href={msg.fileUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className={`flex items-center gap-2 mt-2 text-xs font-bold uppercase tracking-wider ${isMe ? 'text-white/80 hover:text-white' : 'text-primary-500 hover:text-primary-600'}`}
-                                                >
-                                                    <FiPaperclip className="w-3 h-3" /> Download Attachment
-                                                </a>
+                                                <>
+                                                    {msg.messageType === 'image' && msg.fileUrl ? (
+                                                        <div className="-mx-2 -mt-2 mb-2">
+                                                            <img
+                                                                src={msg.fileUrl}
+                                                                alt="Attached image"
+                                                                className="max-w-[250px] sm:max-w-sm rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
+                                                                onClick={() => window.open(msg.fileUrl, '_blank')}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <p className="leading-relaxed font-medium">
+                                                            {msg.content}
+                                                            {msg.isEdited && <span className="text-[10px] opacity-60 ml-1 italic">(edited)</span>}
+                                                        </p>
+                                                    )}
+                                                    {msg.messageType === 'file' && msg.fileUrl && (
+                                                        <a
+                                                            href={msg.fileUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className={`flex items-center gap-2 mt-2 text-xs font-bold uppercase tracking-wider ${isMe ? 'text-white/80 hover:text-white' : 'text-primary-500 hover:text-primary-600'}`}
+                                                        >
+                                                            <FiPaperclip className="w-3 h-3" /> Download Attachment
+                                                        </a>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
+
+                                        {/* Message Options Menu */}
+                                        {isMe && !isEditing && (
+                                            <div className="absolute top-0 right-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => setShowMessageMenu(showMessageMenu === msg._id ? null : msg._id)}
+                                                    className="p-1 text-gray-400 hover:text-primary-500 rounded-full"
+                                                >
+                                                    <FiMoreVertical className="w-4 h-4" />
+                                                </button>
+                                                {showMessageMenu === msg._id && (
+                                                    <div className="absolute right-0 top-6 bg-white dark:bg-gray-800 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-24 overflow-hidden">
+                                                        <button
+                                                            onClick={() => handleEditMessage(msg)}
+                                                            className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-2"
+                                                        >
+                                                            <FiEdit2 className="w-3 h-3" /> Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteMessage(msg._id)}
+                                                            className="w-full text-left px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
+                                                        >
+                                                            <FiTrash2 className="w-3 h-3" /> Delete
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div className={`flex items-center gap-2 mt-1.5 px-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">
                                                 {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Syncing...'}
