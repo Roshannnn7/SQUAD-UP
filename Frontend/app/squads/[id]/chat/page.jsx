@@ -361,6 +361,20 @@ export default function ProjectChatPage() {
                             </div>
                         </div>
 
+                        {/* Leave Squad Option in Chat Sidebar */}
+                        {!isLeader && (
+                            <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800">
+                                <button
+                                    onClick={handleLeave}
+                                    disabled={isLeaving}
+                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-50 dark:bg-red-900/10 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors text-sm"
+                                >
+                                    <FiLogOut className="w-4 h-4" />
+                                    {isLeaving ? 'Leaving...' : 'Leave Squad'}
+                                </button>
+                            </div>
+                        )}
+
                         <div className="p-6">
                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Description</h4>
                             <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium italic">

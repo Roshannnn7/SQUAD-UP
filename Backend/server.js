@@ -29,14 +29,16 @@ app.set('trust proxy', 1);
 // Initialize Socket.IO with comprehensive configuration for production reliability (especially on Render)
 const io = socketIo(server, {
     path: '/socket.io/',
-    transports: ['polling', 'websocket'],
-    origin: [
-        "http://localhost:3000",
-        "http://localhost:5000",
-        "https://squadup-roshannnn7.vercel.app",
-        "https://squadup-azure.vercel.app",
-        "https://squad-up-sfhn.onrender.com"
-    ],
+    origin: (origin, callback) => {
+        // "Nuclear" Option: Reflect the request origin
+        // This allows any origin to connect with credentials
+        // CAUTION: In strictly open/public apps this is risky, but for this debugging phase it's necessary.
+        if (origin) {
+            callback(null, origin);
+        } else {
+            callback(null, true); // Allow curl/postman/mobile
+        }
+    },
     allowEIO3: true,
     connectTimeout: 45000,
     pingTimeout: 30000,
@@ -54,13 +56,13 @@ app.use(helmet({
 
 // Robust Universal CORS
 app.use(cors({
-    origin: [
-        "http://localhost:3000",
-        "http://localhost:5000",
-        "https://squadup-roshannnn7.vercel.app",
-        "https://squadup-azure.vercel.app",
-        "https://squad-up-sfhn.onrender.com"
-    ],
+    origin: (origin, callback) => {
+        if (origin) {
+            callback(null, true); // Using true lets the cors middleware handle the reflection automatically
+        } else {
+            callback(null, true);
+        }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
