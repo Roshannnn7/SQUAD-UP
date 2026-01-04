@@ -281,6 +281,14 @@ export default function LoginPage() {
                                     {showPassword ? <FiEyeOff /> : <FiEye />}
                                 </button>
                             </div>
+                            <div className="flex justify-end mt-1">
+                                <Link
+                                    href="/auth/forgot-password"
+                                    className="text-xs font-bold text-primary-600 dark:text-primary-400 hover:text-primary-500 transition-colors"
+                                >
+                                    Forgot Password?
+                                </Link>
+                            </div>
                         </div>
 
                         <button
