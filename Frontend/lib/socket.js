@@ -12,11 +12,8 @@ class SocketService {
         if (this.socket?.connected) return this.socket;
 
         this.socket = io(SOCKET_URL, {
-            auth: { token },
             withCredentials: true,
-            autoConnect: true,
             reconnection: true,
-            reconnectionAttempts: Infinity,
             timeout: 20000,
         });
 

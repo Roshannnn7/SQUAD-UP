@@ -21,24 +21,21 @@ const errorHandler = require('./middleware/error');
 const initializeSocket = require('./socket/socketHandler');
 
 const app = express();
-const server = http.createServer(app);
-
-// Essential for Render
-app.set('trust proxy', 1);
-
-// whitelisted origins
-const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:5000",
-    "https://squadup-roshannnn7.vercel.app",
-    "https://squadup-azure.vercel.app",
-    "https://squad-up-sfhn.onrender.com"
-];
 
 // Whitelisted origin (Primary Vercel URL)
 const FRONTEND_URL = "https://squadup-roshannnn7.vercel.app";
 
-// Initialize Socket.IO with the requested configuration
+/* 🔴 IMPORTANT: CORS FIRST */
+app.use(cors({
+    origin: FRONTEND_URL,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+
+const server = http.createServer(app);
+
+/* 🔴 Socket.IO CORS */
 const io = socketIo(server, {
     cors: {
         origin: FRONTEND_URL,
@@ -47,6 +44,11 @@ const io = socketIo(server, {
     },
     allowEIO3: true
 });
+
+// Essential for Render
+app.set('trust proxy', 1);
+
+// Initialize socket handler
 initializeSocket(io);
 
 // NUCLEAR FIX: Disable COOP to guarantee Google Login popups can communicate
@@ -55,14 +57,6 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: false,
     contentSecurityPolicy: false,
-}));
-
-// Robust Universal CORS
-app.use(cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
 app.use(express.json());
