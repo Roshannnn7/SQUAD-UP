@@ -26,17 +26,20 @@ const server = http.createServer(app);
 // Essential for Render
 app.set('trust proxy', 1);
 
+// whitelisted origins
+const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "https://squadup-roshannnn7.vercel.app",
+    "https://squadup-azure.vercel.app",
+    "https://squad-up-sfhn.onrender.com"
+];
+
 // Initialize Socket.IO with comprehensive configuration for production reliability (especially on Render)
 const io = socketIo(server, {
     path: '/socket.io/',
     cors: {
-        origin: (origin, callback) => {
-            if (origin) {
-                callback(null, origin);
-            } else {
-                callback(null, true);
-            }
-        },
+        origin: allowedOrigins,
         credentials: true,
         methods: ["GET", "POST"]
     },
@@ -57,13 +60,7 @@ app.use(helmet({
 
 // Robust Universal CORS
 app.use(cors({
-    origin: (origin, callback) => {
-        if (origin) {
-            callback(null, true); // Using true lets the cors middleware handle the reflection automatically
-        } else {
-            callback(null, true);
-        }
-    },
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']

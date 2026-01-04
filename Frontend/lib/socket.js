@@ -14,7 +14,7 @@ class SocketService {
         this.socket = io(SOCKET_URL, {
             auth: { token },
             path: '/socket.io/',
-            transports: ['polling', 'websocket'],
+            transports: ['websocket'],
             withCredentials: true,
             reconnectionAttempts: 5,
             timeout: 20000,
