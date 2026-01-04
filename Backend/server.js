@@ -29,15 +29,16 @@ app.set('trust proxy', 1);
 // Initialize Socket.IO with comprehensive configuration for production reliability (especially on Render)
 const io = socketIo(server, {
     path: '/socket.io/',
-    origin: (origin, callback) => {
-        // "Nuclear" Option: Reflect the request origin
-        // This allows any origin to connect with credentials
-        // CAUTION: In strictly open/public apps this is risky, but for this debugging phase it's necessary.
-        if (origin) {
-            callback(null, origin);
-        } else {
-            callback(null, true); // Allow curl/postman/mobile
-        }
+    cors: {
+        origin: (origin, callback) => {
+            if (origin) {
+                callback(null, origin);
+            } else {
+                callback(null, true);
+            }
+        },
+        credentials: true,
+        methods: ["GET", "POST"]
     },
     allowEIO3: true,
     connectTimeout: 45000,

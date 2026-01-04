@@ -18,7 +18,8 @@ import {
     FiSettings,
     FiCpu,
     FiMessageCircle,
-    FiVideo
+    FiVideo,
+    FiLogOut
 } from 'react-icons/fi';
 
 export default function ProjectChatPage() {
@@ -31,6 +32,7 @@ export default function ProjectChatPage() {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [typingUsers, setTypingUsers] = useState([]);
+    const [isLeaving, setIsLeaving] = useState(false);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
@@ -134,6 +136,23 @@ export default function ProjectChatPage() {
 
         setNewMessage('');
     };
+
+    const handleLeave = async () => {
+        if (!window.confirm('Are you sure you want to leave this squad?')) return;
+        try {
+            setIsLeaving(true);
+            await api.post(`/projects/${id}/leave`);
+            toast.success('Left squad successfully.');
+            router.push('/squads');
+        } catch (error) {
+            console.error('Leave error:', error);
+            toast.error(error.response?.data?.message || 'Failed to leave squad.');
+        } finally {
+            setIsLeaving(false);
+        }
+    };
+
+    const isLeader = project?.creator?._id === user?._id;
 
     if (loading) {
         return (
