@@ -89,7 +89,7 @@ export default function OnboardingPage() {
                 expertise: mentorForm.expertise,
                 bio: mentorForm.bio,
                 sessionPrice: mentorForm.pricePerHour,
-                mode: ['Online'], // Default mode
+                mode: ['video', 'chat'], // Default modes
             };
 
             await api.put('/auth/complete-mentor-profile', payload);

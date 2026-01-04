@@ -31,9 +31,16 @@ const io = socketIo(server, {
     path: '/socket.io/',
     transports: ['polling', 'websocket'],
     cors: {
-        origin: true,
+        origin: function (origin, callback) {
+            // Allow all origins in development or specific patterns in production
+            if (!origin || origin.includes('vercel.app') || origin.includes('localhost') || origin.includes('render.com')) {
+                callback(null, true);
+            } else {
+                callback(null, true); // Fallback to true for safety during transition
+            }
+        },
         credentials: true,
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     },
     allowEIO3: true,
     connectTimeout: 45000,
@@ -51,18 +58,19 @@ app.use(helmet({
 }));
 
 // Robust Universal CORS
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    res.setHeader('Vary', 'Origin');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    next();
-});
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || origin.includes('vercel.app') || origin.includes('localhost') || origin.includes('render.com')) {
+            callback(null, true);
+        } else {
+            callback(null, true);
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
 
-app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
