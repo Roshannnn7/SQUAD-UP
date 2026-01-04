@@ -13,10 +13,13 @@ import {
     orderBy,
     onSnapshot,
     addDoc,
+    setDoc,
     serverTimestamp,
     deleteDoc,
     updateDoc,
-    doc
+    doc,
+    where,
+    getDocs
 } from 'firebase/firestore';
 import { useAuth } from '@/components/auth-provider';
 import toast from 'react-hot-toast';
@@ -35,25 +38,37 @@ import {
     FiMoreVertical,
     FiEdit2,
     FiTrash2,
+    FiCopy,
     FiX,
-    FiCheck
+    FiCheck,
+    FiActivity,
+    FiMoon,
+    FiSun,
+    FiImage
 } from 'react-icons/fi';
+import { formatDistanceToNow } from 'date-fns';
+
+import { useTheme } from 'next-themes';
 
 export default function ProjectChatPage() {
     const { id } = useParams();
     const router = useRouter();
     const { user } = useAuth();
+    const { setTheme, theme } = useTheme();
 
     const [project, setProject] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [typingUsers, setTypingUsers] = useState([]);
+    const [memberStatus, setMemberStatus] = useState({});
+    const [showSettings, setShowSettings] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [isLeaving, setIsLeaving] = useState(false);
     const fileInputRef = useRef(null);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
+    const lastTypingUpdateRef = useRef(0);
 
     const isLeaderVar = project?.creator?._id === user?._id;
     const isMember = project?.members?.some(m => m.user._id === user?._id);
@@ -61,17 +76,16 @@ export default function ProjectChatPage() {
     useEffect(() => {
         fetchProject();
 
-        // Listen to messages from Firestore
+        // Listen to messages
         const q = query(
             collection(db, "squads", id, "messages"),
             orderBy("createdAt", "asc")
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribeMessages = onSnapshot(q, (snapshot) => {
             const msgs = snapshot.docs.map(doc => ({
                 _id: doc.id,
                 ...doc.data(),
-                // Map Firebase fields to existing UI fields
                 content: doc.data().text,
                 sender: {
                     _id: doc.data().senderId,
@@ -84,7 +98,71 @@ export default function ProjectChatPage() {
             setTimeout(scrollToBottom, 100);
         });
 
-        return () => unsubscribe();
+        // Listen to typing status
+        const typingQuery = query(
+            collection(db, "squads", id, "typing"),
+            orderBy("timestamp", "desc")
+        );
+
+        const unsubscribeTyping = onSnapshot(typingQuery, (snapshot) => {
+            const now = Date.now();
+            const activeTypers = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .filter(data => {
+                    const timestamp = data.timestamp?.toDate()?.getTime();
+                    return data.id !== user?._id && timestamp && (now - timestamp < 3000);
+                });
+            setTypingUsers(activeTypers);
+        });
+
+        // Listen to presence
+        const presenceQuery = collection(db, "squads", id, "presence");
+        const unsubscribePresence = onSnapshot(presenceQuery, (snapshot) => {
+            const statusMap = {};
+            snapshot.docs.forEach(doc => {
+                statusMap[doc.id] = doc.data();
+            });
+            setMemberStatus(statusMap);
+        });
+
+        // Set initial online status and heartbeat
+        const updatePresence = async (status) => {
+            if (!user?._id) return;
+            const userStatusRef = doc(db, "squads", id, "presence", user._id);
+            try {
+                await setDoc(userStatusRef, {
+                    isOnline: status === 'online',
+                    lastSeen: serverTimestamp(),
+                    userId: user._id,
+                    userName: user.fullName || 'Unknown'
+                }, { merge: true });
+            } catch (err) {
+                console.error("Presence update failed", err);
+            }
+        };
+
+        updatePresence('online');
+        const intervalId = setInterval(() => updatePresence('online'), 30000); // Heartbeat every 30s
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                updatePresence('offline');
+            } else {
+                updatePresence('online');
+            }
+        };
+
+        window.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('beforeunload', () => updatePresence('offline'));
+
+        return () => {
+            unsubscribeMessages();
+            unsubscribeTyping();
+            unsubscribePresence();
+            clearInterval(intervalId);
+            window.removeEventListener('visibilitychange', handleVisibilityChange);
+            updatePresence('offline');
+        };
     }, [id, user?._id]);
 
     const fetchProject = async () => {
@@ -104,8 +182,23 @@ export default function ProjectChatPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const handleTyping = (e) => {
+    const handleTyping = async (e) => {
         setNewMessage(e.target.value);
+
+        if (!user?._id) return;
+
+        const now = Date.now();
+        if (now - lastTypingUpdateRef.current > 2000) {
+            lastTypingUpdateRef.current = now;
+            try {
+                await setDoc(doc(db, "squads", id, "typing", user._id), {
+                    name: user.fullName,
+                    timestamp: serverTimestamp()
+                });
+            } catch (error) {
+                console.error("Typing indicator error", error);
+            }
+        }
     };
 
     const handleSendMessage = async (e) => {
@@ -203,6 +296,12 @@ export default function ProjectChatPage() {
         setShowMessageMenu(null);
     };
 
+    const handleCopyMessage = (text) => {
+        navigator.clipboard.writeText(text);
+        toast.success('Copied to clipboard');
+        setShowMessageMenu(null);
+    };
+
     const handleSaveEdit = async (msgId) => {
         if (!editContent.trim()) return;
         try {
@@ -246,8 +345,85 @@ export default function ProjectChatPage() {
         <div className="h-screen flex flex-col bg-[#f8fafc] dark:bg-[#0f172a] overflow-hidden selection:bg-primary-500/30">
             <Navbar />
 
+            {/* Settings Modal */}
+            <AnimatePresence>
+                {showSettings && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowSettings(false)}
+                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 w-full max-w-md overflow-hidden border border-gray-100 dark:border-gray-700"
+                        >
+                            <div className="absolute top-0 right-0 p-4">
+                                <button
+                                    onClick={() => setShowSettings(false)}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                                >
+                                    <FiX className="w-5 h-5 text-gray-500" />
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-3 bg-primary-100 dark:bg-primary-900/30 text-primary-600 rounded-xl">
+                                    <FiSettings className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Chat Settings</h3>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Visual Preference</h4>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => setTheme('light')}
+                                            className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 ${theme === 'light' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'} font-bold transition-all`}
+                                        >
+                                            <FiSun className="w-4 h-4" /> Light Mode
+                                        </button>
+                                        <button
+                                            onClick={() => setTheme('dark')}
+                                            className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 ${theme === 'dark' ? 'border-primary-500 bg-primary-900/20 text-primary-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'} font-bold transition-all`}
+                                        >
+                                            <FiMoon className="w-4 h-4" /> Dark Mode
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 mt-2">Currently managed by system preferences</p>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Notifications</h4>
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
+                                                <FiActivity className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white">Active Status</p>
+                                                <p className="text-xs text-gray-500">Show when you're active</p>
+                                            </div>
+                                        </div>
+                                        <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-primary-600">
+                                            <span className="translate-x-6 inline-block h-4 w-4 transform rounded-full bg-white transition" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             {/* Content Area */}
             <div className="flex-1 max-w-[1600px] mx-auto w-full flex mt-16 overflow-hidden relative">
+
 
                 {/* Decoration */}
                 <div className="absolute top-0 right-0 w-[30%] h-[30%] bg-primary-500/5 blur-[100px] rounded-full pointer-events-none" />
@@ -303,7 +479,10 @@ export default function ProjectChatPage() {
                             >
                                 <FiVideo className="w-5 h-5 group-hover:animate-pulse" />
                             </button>
-                            <button className="p-3 bg-primary-600/10 text-primary-600 rounded-2xl hover:bg-primary-600 hover:text-white transition-all">
+                            <button
+                                onClick={() => setShowSettings(true)}
+                                className="p-3 bg-primary-600/10 text-primary-600 rounded-2xl hover:bg-primary-600 hover:text-white transition-all transform hover:rotate-90 duration-300"
+                            >
                                 <FiSettings className="w-5 h-5" />
                             </button>
                         </div>
@@ -404,32 +583,40 @@ export default function ProjectChatPage() {
                                         </div>
 
                                         {/* Message Options Menu */}
-                                        {isMe && !isEditing && (
-                                            <div className="absolute top-0 right-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => setShowMessageMenu(showMessageMenu === msg._id ? null : msg._id)}
-                                                    className="p-1 text-gray-400 hover:text-primary-500 rounded-full"
-                                                >
-                                                    <FiMoreVertical className="w-4 h-4" />
-                                                </button>
-                                                {showMessageMenu === msg._id && (
-                                                    <div className="absolute right-0 top-6 bg-white dark:bg-gray-800 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-24 overflow-hidden">
-                                                        <button
-                                                            onClick={() => handleEditMessage(msg)}
-                                                            className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-2"
-                                                        >
-                                                            <FiEdit2 className="w-3 h-3" /> Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteMessage(msg._id)}
-                                                            className="w-full text-left px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
-                                                        >
-                                                            <FiTrash2 className="w-3 h-3" /> Delete
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
+                                        <div className={`absolute top-0 right-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
+                                            <button
+                                                onClick={() => setShowMessageMenu(showMessageMenu === msg._id ? null : msg._id)}
+                                                className="p-1 text-gray-400 hover:text-primary-500 rounded-full"
+                                            >
+                                                <FiMoreVertical className="w-4 h-4" />
+                                            </button>
+                                            {showMessageMenu === msg._id && (
+                                                <div className="absolute right-0 top-6 bg-white dark:bg-gray-800 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-32 overflow-hidden">
+                                                    <button
+                                                        onClick={() => handleCopyMessage(msg.content)}
+                                                        className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-2"
+                                                    >
+                                                        <FiCopy className="w-3 h-3" /> Copy
+                                                    </button>
+                                                    {isMe && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleEditMessage(msg)}
+                                                                className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-2"
+                                                            >
+                                                                <FiEdit2 className="w-3 h-3" /> Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteMessage(msg._id)}
+                                                                className="w-full text-left px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
+                                                            >
+                                                                <FiTrash2 className="w-3 h-3" /> Delete
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
 
                                         <div className={`flex items-center gap-2 mt-1.5 px-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">
@@ -560,9 +747,18 @@ export default function ProjectChatPage() {
                                                     className="w-9 h-9 rounded-xl object-cover transition-transform group-hover:scale-110"
                                                     alt=""
                                                 />
-                                                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full" />
+                                                <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border-2 border-white dark:border-gray-800 rounded-full ${memberStatus[member.user._id]?.isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
                                             </div>
-                                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-primary-500 transition-colors">{member.user?.fullName}</span>
+                                            <div>
+                                                <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-primary-500 transition-colors block">{member.user?.fullName}</span>
+                                                <span className="text-[10px] bg-clip-text text-transparent bg-gradient-to-r from-gray-500 to-gray-400 font-bold uppercase tracking-tight">
+                                                    {memberStatus[member.user._id]?.isOnline
+                                                        ? 'Active now'
+                                                        : memberStatus[member.user._id]?.lastSeen
+                                                            ? `Seen ${formatDistanceToNow(memberStatus[member.user._id].lastSeen.toDate(), { addSuffix: true })}`
+                                                            : 'Offline'}
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             {member.role === 'leader' && <span className="text-[7px] bg-yellow-400/10 text-yellow-600 px-2 py-1 rounded-full font-black uppercase tracking-tighter shadow-sm border border-yellow-400/20">Lead</span>}
