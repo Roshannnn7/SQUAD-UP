@@ -18,7 +18,8 @@ import {
     FiMail,
     FiCalendar,
     FiUserCheck,
-    FiUserX
+    FiUserX,
+    FiTrash2
 } from 'react-icons/fi';
 
 export default function AdminDashboard() {
@@ -93,6 +94,24 @@ export default function AdminDashboard() {
 
         setFilteredUsers(filtered);
     }, [searchTerm, roleFilter, users]);
+
+    const handleDeleteUser = async (userId) => {
+        if (!window.confirm('Are you sure you want to permanently delete this user? This action cannot be undone and will remove all their associated data.')) {
+            return;
+        }
+
+        try {
+            await api.delete(`/admin/users/${userId}`);
+            toast.success('User deleted successfully');
+            // Refresh users list
+            const usersRes = await api.get(`/admin/users?page=${page}&limit=10`);
+            setUsers(usersRes.data.users || []);
+            setTotalPages(usersRes.data.totalPages || 1);
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete user');
+        }
+    };
 
     const handleLogout = () => {
         logout();
@@ -311,6 +330,9 @@ export default function AdminDashboard() {
                                             <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">
                                                 Joined
                                             </th>
+                                            <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">
+                                                Actions
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -340,13 +362,12 @@ export default function AdminDashboard() {
                                                     {u.email}
                                                 </td>
                                                 <td className="py-4 px-4">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                        u.role === 'admin'
-                                                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                                            : u.role === 'mentor'
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.role === 'admin'
+                                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                                        : u.role === 'mentor'
                                                             ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                                                             : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                                    }`}>
+                                                        }`}>
                                                         {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
                                                     </span>
                                                 </td>
@@ -366,6 +387,17 @@ export default function AdminDashboard() {
                                                         <FiCalendar className="w-4 h-4" />
                                                         {new Date(u.createdAt).toLocaleDateString()}
                                                     </div>
+                                                </td>
+                                                <td className="py-4 px-4">
+                                                    {u._id !== user._id && (
+                                                        <button
+                                                            onClick={() => handleDeleteUser(u._id)}
+                                                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                                                            title="Delete User"
+                                                        >
+                                                            <FiTrash2 className="w-5 h-5" />
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </motion.tr>
                                         ))}

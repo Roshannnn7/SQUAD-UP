@@ -171,9 +171,18 @@ export default function ProjectChatPage() {
             setLoading(true);
             const res = await api.get(`/projects/${id}`);
             setProject(res.data);
+
+            // Check if user is a member
+            const userIsMember = res.data.members?.some(m => m.user._id === user?._id);
+            if (!userIsMember) {
+                toast.error('You must join the squad to access chat');
+                router.push(`/squads/${id}`);
+                return;
+            }
         } catch (error) {
             console.error('Fetch error:', error);
             toast.error('Failed to load project details.');
+            router.push('/squads');
         } finally {
             setLoading(false);
         }
