@@ -99,12 +99,8 @@ export default function AboutPage() {
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
                                 <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white dark:border-gray-800 shadow-2xl">
-                                    {/* Using a high-quality placeholder since direct photo isn't provided, but user can easily replace */}
-                                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
-                                        <FiUser className="w-24 h-24 text-gray-400" />
-                                    </div>
                                     <Image
-                                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=Roshan`}
+                                        src="/assets/roshan-profile.jpg"
                                         alt="Roshan Rathod"
                                         layout="fill"
                                         className="object-cover"

@@ -246,7 +246,7 @@ export default function LandingPage() {
                         <div className="relative group">
                             <div className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 rounded-full blur-2xl group-hover:blur-3xl transition-all" />
                             <img
-                                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Roshan"
+                                src="/assets/roshan-profile.jpg"
                                 alt="Roshan Rathod"
                                 className="relative w-48 h-48 rounded-full border-4 border-white dark:border-gray-800 shadow-2xl object-cover"
                             />
