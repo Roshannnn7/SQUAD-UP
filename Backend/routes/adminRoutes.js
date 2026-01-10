@@ -7,14 +7,20 @@ const {
     updateUserStatus,
     getAdminBookings,
     getAdminProjects,
+    deleteUser,
 } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/auth');
 
-router.get('/stats', protect, admin, getPlatformStats);
-router.get('/users', protect, admin, getUsers);
-router.put('/mentors/:id/verify', protect, admin, verifyMentor);
-router.put('/users/:id/status', protect, admin, updateUserStatus);
-router.get('/bookings', protect, admin, getAdminBookings);
-router.get('/projects', protect, admin, getAdminProjects);
+// All routes are protected and require admin role
+router.use(protect);
+router.use(admin);
+
+router.get('/stats', getPlatformStats);
+router.get('/users', getUsers);
+router.delete('/users/:id', deleteUser);
+router.put('/users/:id/status', updateUserStatus);
+router.put('/mentors/:id/verify', verifyMentor);
+router.get('/bookings', getAdminBookings);
+router.get('/projects', getAdminProjects);
 
 module.exports = router;

@@ -34,6 +34,24 @@ const messageSchema = mongoose.Schema(
         readAt: {
             type: Date,
         },
+        isPinned: {
+            type: Boolean,
+            default: false,
+        },
+        pinnedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
+        pinnedAt: {
+            type: Date,
+        },
+        isEdited: {
+            type: Boolean,
+            default: false,
+        },
+        editedAt: {
+            type: Date,
+        },
     },
     {
         timestamps: true,

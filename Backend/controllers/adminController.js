@@ -235,6 +235,88 @@ const getAdminProjects = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Delete user permanently (Admin only)
+// @route   DELETE /api/admin/users/:id
+// @access  Private/Admin
+const deleteUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    // Cannot delete admin users
+    if (user.role === 'admin') {
+        res.status(400);
+        throw new Error('Cannot delete admin users');
+    }
+
+    const Message = require('../models/Message');
+    const Notification = require('../models/Notification');
+    const VideoCall = require('../models/VideoCall');
+    const Availability = require('../models/Availability');
+    const SquadActivityLog = require('../models/SquadActivityLog');
+    const SquadRule = require('../models/SquadRule');
+    const JoinRequest = require('../models/JoinRequest');
+    const Report = require('../models/Report');
+
+    // Remove user from all squads
+    await Project.updateMany(
+        { 'members.user': user._id },
+        { $pull: { members: { user: user._id } } }
+    );
+
+    // Delete projects created by user
+    const userProjects = await Project.find({ creator: user._id });
+    for (const project of userProjects) {
+        // Delete all related data for each project
+        await Promise.all([
+            Message.deleteMany({ project: project._id }),
+            SquadRule.deleteMany({ project: project._id }),
+            JoinRequest.deleteMany({ project: project._id }),
+            SquadActivityLog.deleteMany({ project: project._id }),
+        ]);
+        await project.deleteOne();
+    }
+
+    // Delete or anonymize user's messages
+    await Message.updateMany(
+        { sender: user._id },
+        {
+            $set: {
+                content: '[Message from deleted user]',
+                sender: null,
+            }
+        }
+    );
+
+    // Delete all user-related data
+    await Promise.all([
+        MentorProfile.deleteOne({ user: user._id }),
+        StudentProfile.deleteOne({ user: user._id }),
+        Booking.deleteMany({ $or: [{ student: user._id }, { mentor: user._id }] }),
+        Notification.deleteMany({ $or: [{ user: user._id }, { sender: user._id }] }),
+        VideoCall.deleteMany({ $or: [{ caller: user._id }, { receiver: user._id }] }),
+        Availability.deleteMany({ mentor: user._id }),
+        JoinRequest.deleteMany({ user: user._id }),
+        SquadActivityLog.deleteMany({ user: user._id }),
+        SquadRule.deleteMany({ createdBy: user._id }),
+        Report.deleteMany({ $or: [{ reportedBy: user._id }, { targetId: user._id }] }),
+    ]);
+
+    // Delete the user
+    await user.deleteOne();
+
+    // Note: Firebase session invalidation should be handled on the client side
+    // or through Firebase Admin SDK if needed
+
+    res.json({
+        message: 'User and all related data deleted successfully',
+        deletedUserId: req.params.id,
+    });
+});
+
 module.exports = {
     getPlatformStats,
     getUsers,
@@ -242,4 +324,5 @@ module.exports = {
     updateUserStatus,
     getAdminBookings,
     getAdminProjects,
+    deleteUser,
 };

@@ -15,6 +15,7 @@ const projectRoutes = require('./routes/projectRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 const errorHandler = require('./middleware/error');
 
 const app = express();
@@ -61,6 +62,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Duplicate mounts for platform flexibility
 app.use('/auth', authRoutes);

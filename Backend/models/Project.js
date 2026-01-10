@@ -22,7 +22,7 @@ const projectSchema = mongoose.Schema(
             },
             role: {
                 type: String,
-                enum: ['leader', 'member'],
+                enum: ['admin', 'moderator', 'member'],
                 default: 'member',
             },
             joinedAt: {
@@ -30,6 +30,23 @@ const projectSchema = mongoose.Schema(
                 default: Date.now,
             },
         }],
+        pinnedMessages: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Message',
+        }],
+        requireJoinApproval: {
+            type: Boolean,
+            default: false,
+        },
+        discoveryTags: [{
+            type: String,
+            trim: true,
+        }],
+        category: {
+            type: String,
+            enum: ['web', 'mobile', 'ai_ml', 'blockchain', 'game', 'iot', 'other'],
+            default: 'other',
+        },
         skillsRequired: [{
             type: String,
             trim: true,
