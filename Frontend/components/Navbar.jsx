@@ -45,6 +45,7 @@ export default function Navbar() {
         { name: 'Squads', href: '/squads', icon: <FiUsers /> },
         { name: 'Mentors', href: '/mentors', icon: <FiBookOpen /> },
         { name: 'Messages', href: '/messages', icon: <FiMessageSquare /> },
+        { name: 'About', href: '/about', icon: <FiUser /> },
     ];
 
     return (

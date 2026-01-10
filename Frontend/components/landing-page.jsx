@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FiUsers, FiVideo, FiCalendar, FiMessageSquare, FiGitMerge, FiStar } from 'react-icons/fi';
+import { FiUsers, FiVideo, FiCalendar, FiMessageSquare, FiGitMerge, FiStar, FiInstagram, FiLinkedin, FiGithub } from 'react-icons/fi';
 import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
 
@@ -236,6 +236,68 @@ export default function LandingPage() {
                             </Link>
                         )}
                     </motion.div>
+                </div>
+            </section>
+
+            {/* Meet the Creator Section */}
+            <section className="py-20 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col md:flex-row items-center gap-12 glassmorphism p-8 md:p-16 rounded-[40px] border border-gray-100 dark:border-gray-800">
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 rounded-full blur-2xl group-hover:blur-3xl transition-all" />
+                            <img
+                                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Roshan"
+                                alt="Roshan Rathod"
+                                className="relative w-48 h-48 rounded-full border-4 border-white dark:border-gray-800 shadow-2xl object-cover"
+                            />
+                        </div>
+                        <div className="flex-1 text-center md:text-left">
+                            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Meet the Creator</h2>
+                            <p className="text-primary-600 dark:text-primary-400 font-bold mb-4">Roshan Rathod | BCA Student</p>
+                            <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg">
+                                "SquadUp started as a simple idea to help my fellow students find the right collaborators.
+                                Today, it's a mission to empower every aspiring developer with the tools and mentorship they need to succeed."
+                            </p>
+                            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-6">
+                                <Link href="/about" className="btn-secondary py-3 px-8 flex items-center gap-2 group whitespace-nowrap">
+                                    <span>About Me</span>
+                                    <FiStar className="group-hover:text-yellow-400 transition-colors" />
+                                </Link>
+                                <div className="flex items-center gap-4">
+                                    <motion.a
+                                        href="https://www.instagram.com/_roshannnn_07?igsh=emN4MG8yM2JudnZ0"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        whileHover={{ scale: 1.2, rotate: 5 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        className="p-3 bg-gradient-to-tr from-yellow-400 to-purple-600 text-white rounded-full shadow-lg hover:shadow-purple-500/30 transition-shadow"
+                                    >
+                                        <FiInstagram className="w-5 h-5" />
+                                    </motion.a>
+                                    <motion.a
+                                        href="https://www.linkedin.com/in/roshan-rathod-38736b259?utm_source=share_via&utm_content=profile&utm_medium=member_android"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        whileHover={{ scale: 1.2, rotate: -5 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        className="p-3 bg-[#0077b5] text-white rounded-full shadow-lg hover:shadow-blue-500/30 transition-shadow"
+                                    >
+                                        <FiLinkedin className="w-5 h-5" />
+                                    </motion.a>
+                                    <motion.a
+                                        href="https://github.com/Roshannnn7"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        whileHover={{ scale: 1.2, rotate: 5 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        className="p-3 bg-[#333] text-white rounded-full shadow-lg hover:shadow-gray-500/30 transition-shadow"
+                                    >
+                                        <FiGithub className="w-5 h-5" />
+                                    </motion.a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
