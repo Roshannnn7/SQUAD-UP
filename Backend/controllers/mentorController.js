@@ -10,7 +10,7 @@ const Booking = require('../models/Booking');
 const getMentors = asyncHandler(async (req, res) => {
     const { search, expertise, minRating, verified } = req.query;
 
-    let query = { isVerified: true };
+    let query = {};
 
     // Search by name or company
     if (search) {

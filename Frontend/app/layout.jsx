@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "../components/auth-provider";
+import PageTransition from "../components/page-transition";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,7 +19,9 @@ export default function RootLayout({ children }) {
                     enableSystem={false}
                 >
                     <AuthProvider>
-                        {children}
+                        <PageTransition>
+                            {children}
+                        </PageTransition>
                         <Toaster
                             position="top-right"
                             toastOptions={{

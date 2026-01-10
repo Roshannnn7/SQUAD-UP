@@ -12,6 +12,7 @@ export default function OnboardingPage() {
     const router = useRouter();
     const { user, updateProfile } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
+    const [onboardingRole, setOnboardingRole] = useState(user?.role || 'student');
 
     // Student Form State
     const [studentForm, setStudentForm] = useState({
@@ -116,12 +117,35 @@ export default function OnboardingPage() {
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold gradient-text mb-2">Complete Your Profile</h1>
                     <p className="text-gray-600 dark:text-gray-400">
-                        Tell us more about yourself to get started on SquadUp as a {user.role}.
+                        Tell us more about yourself to get started on SquadUp as a {onboardingRole}.
                     </p>
                 </div>
 
                 <div className="glassmorphism rounded-2xl p-8 shadow-xl">
-                    {user.role === 'student' ? (
+                    <div className="flex justify-center gap-4 mb-10 p-1.5 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl max-w-md mx-auto border border-gray-200 dark:border-gray-700">
+                        <button
+                            onClick={() => setOnboardingRole('student')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl transition-all duration-300 ${onboardingRole === 'student'
+                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30 scale-105'
+                                : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                }`}
+                        >
+                            <FiBook className={onboardingRole === 'student' ? 'text-white' : 'text-gray-400'} />
+                            <span className="font-bold">Student</span>
+                        </button>
+                        <button
+                            onClick={() => setOnboardingRole('mentor')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl transition-all duration-300 ${onboardingRole === 'mentor'
+                                ? 'bg-secondary-600 text-white shadow-lg shadow-secondary-500/30 scale-105'
+                                : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                }`}
+                        >
+                            <FiBriefcase className={onboardingRole === 'mentor' ? 'text-white' : 'text-gray-400'} />
+                            <span className="font-bold">Mentor</span>
+                        </button>
+                    </div>
+
+                    {onboardingRole === 'student' ? (
                         <form onSubmit={submitStudentProfile} className="space-y-6">
                             {/* ... student form content ... */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -266,8 +290,9 @@ export default function OnboardingPage() {
                                 {isLoading ? 'Saving...' : 'Complete Student Profile'}
                             </button>
                         </form>
-                    ) : user.role === 'mentor' ? (
+                    ) : onboardingRole === 'mentor' ? (
                         <form onSubmit={submitMentorProfile} className="space-y-6">
+                            {/* ... mentor form content ... */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
