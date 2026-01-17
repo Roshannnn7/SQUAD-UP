@@ -29,6 +29,15 @@ const userSchema = mongoose.Schema(
             type: String,
             default: '',
         },
+        coverPhoto: {
+            type: String,
+            default: '',
+        },
+        bio: {
+            type: String,
+            maxlength: 500,
+            default: '',
+        },
         isProfileComplete: {
             type: Boolean,
             default: false,
@@ -40,6 +49,94 @@ const userSchema = mongoose.Schema(
         lastLogin: {
             type: Date,
             default: Date.now,
+        },
+        // Social Links
+        socialLinks: {
+            github: String,
+            linkedin: String,
+            twitter: String,
+            portfolio: String,
+        },
+        // Skills & Interests
+        skills: [{
+            type: String,
+            trim: true,
+        }],
+        interests: [{
+            type: String,
+            trim: true,
+        }],
+        // User Status & Availability
+        status: {
+            type: String,
+            enum: ['online', 'offline', 'busy', 'away'],
+            default: 'offline',
+        },
+        customStatus: {
+            type: String,
+            maxlength: 100,
+            default: '',
+        },
+        doNotDisturb: {
+            type: Boolean,
+            default: false,
+        },
+        // Preferences
+        preferences: {
+            theme: {
+                type: String,
+                enum: ['light', 'dark', 'auto'],
+                default: 'auto',
+            },
+            emailNotifications: {
+                type: Boolean,
+                default: true,
+            },
+            pushNotifications: {
+                type: Boolean,
+                default: true,
+            },
+        },
+        // Gamification
+        points: {
+            type: Number,
+            default: 0,
+        },
+        level: {
+            type: Number,
+            default: 1,
+        },
+        badges: [{
+            name: String,
+            icon: String,
+            earnedAt: {
+                type: Date,
+                default: Date.now,
+            },
+        }],
+        streak: {
+            current: {
+                type: Number,
+                default: 0,
+            },
+            longest: {
+                type: Number,
+                default: 0,
+            },
+            lastActiveDate: Date,
+        },
+        // Verification
+        isEmailVerified: {
+            type: Boolean,
+            default: false,
+        },
+        isGithubConnected: {
+            type: Boolean,
+            default: false,
+        },
+        isLinkedinConnected: {
+            type: Boolean,
+            default: false,
         },
         resetPasswordOtp: String,
         resetPasswordExpires: Date,

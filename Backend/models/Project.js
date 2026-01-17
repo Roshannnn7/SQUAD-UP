@@ -78,6 +78,49 @@ const projectSchema = mongoose.Schema(
             type: String,
             unique: true,
         },
+        // Showcase Features
+        isShowcase: {
+            type: Boolean,
+            default: false,
+        },
+        showcaseDescription: {
+            type: String,
+        },
+        showcaseImages: [{
+            type: String,
+        }],
+        demoUrl: {
+            type: String,
+        },
+        likes: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }],
+        views: {
+            type: Number,
+            default: 0,
+        },
+        // Analytics
+        analytics: {
+            messageCount: {
+                type: Number,
+                default: 0,
+            },
+            taskCompletionRate: {
+                type: Number,
+                default: 0,
+            },
+            activityScore: {
+                type: Number,
+                default: 0,
+            },
+            lastActivityAt: Date,
+        },
+        // Template
+        createdFromTemplate: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'SquadTemplate',
+        },
     },
     {
         timestamps: true,

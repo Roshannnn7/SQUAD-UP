@@ -9,9 +9,169 @@ SquadUp is a modern web application that connects students and mentors for colla
 - **Role-Based Access**: Student, Mentor, and Admin roles with specific permissions
 - **Squad Management**: Create and join project squads with team collaboration
 - **Mentorship System**: Book sessions with verified mentors
-- **Real-time Messaging**: Chat with squad members and mentors
+- **Real-time Messaging**: Chat with squad members and mentors using Firebase Firestore
 - **Video Calling**: Built-in video call functionality for remote collaboration
 - **Notifications**: Stay updated with real-time notifications
+
+### 🎯 Community & Engagement Features
+
+#### **Gamification & Leaderboards** 🏆
+- **Points System**: Earn points for squad activities (messages, tasks completed, meetings attended)
+- **Level Progression**: Automatic level-up based on points (100 points = 1 level)
+- **Achievement Badges**: Unlock badges for milestones and contributions
+- **Streak Tracking**: Track consecutive active days with longest streak records
+- **Global Leaderboard**: Compare your progress with other users
+
+#### **Squad Showcase** 🌟
+- **Project Portfolio**: Public showcase page for completed projects
+- **Like System**: Upvote favorite projects
+- **Demo Links**: Share live demos and GitHub repos
+- **Showcase Images**: Display project screenshots
+- **View Counter**: Track project popularity
+
+### 💬 Enhanced Communication
+
+#### **Message Reactions** 😊
+- Quick emoji reactions (👍, ❤️, 🎉, 😊, 🚀, 👏, 🔥, 💯)
+- See who reacted to each message
+- Toggle reactions on/off
+- Real-time reaction updates
+
+#### **Threaded Replies** 💬
+- Reply to specific messages
+- Organized thread view in modal
+- Thread reply counter on parent messages
+- Nested conversation support
+
+#### **Message Bookmarks** 🔖
+- Save important messages privately
+- Personal bookmark collection with notes
+- Quick access to bookmarked messages
+- Search through bookmarks
+
+#### **Hashtag System** #️⃣
+- Tag messages with hashtags
+- Clickable hashtag search
+- Discover trending topics
+- Filter messages by hashtag
+
+### 🤝 Collaboration Tools
+
+#### **Kanban Board** 📋
+- Visual task management (To Do, In Progress, Done)
+- Create, edit, and delete tasks
+- Drag-and-drop task movement
+- Priority indicators (Low, Medium, High)
+- Assign tasks to team members
+- Due date tracking
+- Task labels and descriptions
+
+#### **Polls & Voting** 🗳️
+- Create custom polls for team decisions
+- Multiple choice options
+- Anonymous voting option
+- Allow/disallow multiple votes
+- Real-time vote visualization
+- Percentage-based results
+
+#### **Resource Library** 📚
+- Shared links repository per squad
+- Categorize resources (Article, Video, Documentation, Tutorial, Tool)
+- Tag-based organization
+- Upvote/downvote helpful resources
+- Filter by type and tags
+- Sort by popularity or recency
+
+#### **Code Snippets** 💻
+- Share code snippets with syntax highlighting
+- Multi-language support
+- Tag and categorize snippets
+- Public/private visibility
+- Edit and version tracking
+
+#### **Event Calendar** 📅
+- Create squad events and meetings
+- Set start/end times and locations
+- Meeting link integration (Zoom, Google Meet, etc.)
+- RSVP functionality (Accept/Decline)
+- Email reminders
+- Recurring events support
+- Attendee management
+
+### 🎨 Personalization & UX
+
+####  **User Profiles Enhanced** 👤
+- **Cover Photos**: Customize profile appearance
+- **Bio Section**: Write a personal bio (500 char max)
+- **Skills Showcase**: List your technical skills
+- **Interests**: Share your interests
+- **Social Links**: Connect GitHub, LinkedIn, Twitter, Portfolio
+- **Verification Badges**: Email verified, GitHub connected, LinkedIn connected
+
+#### **User Status & Availability** 🟢
+- Online/Offline/Busy/Away status
+- Custom status messages
+- Do Not Disturb mode
+- Real-time status updates
+
+#### **Theme Customization** 🎨
+- Light/Dark/Auto themes
+- Per-user theme preferences
+- Smooth theme transitions
+- System theme sync
+
+#### **Notification Preferences**
+- Email notification toggle
+- Push notification control
+- Granular notification settings
+
+### 📊 Analytics & Insights
+
+#### **Squad Analytics Dashboard** 📈
+- Message frequency charts
+- Most active members
+- Task completion rate
+- Activity score tracking
+- Last activity timestamps
+- Squad health metrics
+
+### 🎓 Quick-Start Features
+
+#### **Squad Templates** 🚀
+- Pre-configured squad structures
+- **6 Official Templates**:
+  - 🌐 Web Development Squad
+  - 📱 Mobile App Squad
+  - 🤖 AI/ML Research Squad
+  - ⛓️ Blockchain Squad
+  - 🎮 Game Development Squad
+  - 💡 IoT Squad
+- Each template includes:
+  - Default squad rules
+  - Suggested skills
+  - Pre-configured tags
+  - Initial task checklist
+- One-click squad creation from templates
+- Template usage statistics
+
+### 🔍 Discovery & Networking
+
+#### **User Directory** 👥
+- Browse all active platform users
+- Search by name, email, or bio
+- Filter by role (Student, Mentor, Admin)
+- Filter by skills and interests
+- Profile cards with key info
+- Social media links integration
+- Status indicators
+- Skills and interests display
+- Pagination support
+
+#### **Squad Recommendations** (Coming Soon)
+- Personalized squad suggestions
+- Based on skills and interests
+- Similar squads feature
+- Trending squads
 
 ### Enhanced Squad Features
 

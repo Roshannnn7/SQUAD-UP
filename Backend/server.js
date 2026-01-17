@@ -64,6 +64,25 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/reports', reportRoutes);
 
+// New feature routes
+const messageEnhancementRoutes = require('./routes/messageEnhancementRoutes');
+const pollRoutes = require('./routes/pollRoutes');
+const resourceRoutes = require('./routes/resourceRoutes');
+const snippetRoutes = require('./routes/snippetRoutes');
+const taskRoutes = require('./routes/taskRoutes');
+const eventRoutes = require('./routes/eventRoutes');
+const templateRoutes = require('./routes/templateRoutes');
+const userEnhancementRoutes = require('./routes/userEnhancementRoutes');
+
+app.use('/api/message-enhancements', messageEnhancementRoutes);
+app.use('/api/polls', pollRoutes);
+app.use('/api/resources', resourceRoutes);
+app.use('/api/snippets', snippetRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/templates', templateRoutes);
+app.use('/api/user-enhancements', userEnhancementRoutes);
+
 // Duplicate mounts for platform flexibility
 app.use('/auth', authRoutes);
 

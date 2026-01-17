@@ -52,6 +52,19 @@ const messageSchema = mongoose.Schema(
         editedAt: {
             type: Date,
         },
+        threadParent: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Message',
+        },
+        threadReplyCount: {
+            type: Number,
+            default: 0,
+        },
+        hashtags: [{
+            type: String,
+            trim: true,
+            lowercase: true,
+        }],
     },
     {
         timestamps: true,
