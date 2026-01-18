@@ -126,6 +126,17 @@ const getUserProfile = async (req, res) => {
             profileData.recentPosts = recentPosts;
         }
 
+        // Add Mutual Squads if not own profile
+        if (currentUserId && !isOwnProfile) {
+            const mutualProjects = await Project.find({
+                $and: [
+                    { 'members.user': currentUserId },
+                    { 'members.user': userId }
+                ]
+            }).select('name category status');
+            profileData.mutualSquads = mutualProjects;
+        }
+
         res.status(200).json({
             success: true,
             data: profileData,

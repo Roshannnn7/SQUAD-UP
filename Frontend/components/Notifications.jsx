@@ -68,6 +68,8 @@ export default function Notifications() {
             case 'booking': return <FiCalendar className="text-blue-500" />;
             case 'message': return <FiMessageSquare className="text-purple-500" />;
             case 'project': return <FiCheck className="text-green-500" />;
+            case 'connection_request': return <FiUsers className="text-primary-500" />;
+            case 'connection_accepted': return <FiCheck className="text-emerald-500" />;
             default: return <FiInfo className="text-gray-500" />;
         }
     };
