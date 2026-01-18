@@ -192,9 +192,8 @@ const getMyProfile = async (req, res) => {
 // @access  Private
 const updateUserProfile = async (req, res) => {
     try {
-        let userId = req.user._id;
+        const userId = req.user._id;
         const {
-            targetUserId,
             fullName,
             headline,
             bio,
@@ -208,11 +207,6 @@ const updateUserProfile = async (req, res) => {
             profilePhoto,
             coverPhoto,
         } = req.body;
-
-        // If admin is updating another user
-        if (targetUserId && req.user.role === 'admin') {
-            userId = targetUserId;
-        }
 
         const user = await User.findById(userId);
 

@@ -12,10 +12,12 @@ import {
     FiGlobe, FiGithub, FiLinkedin, FiExternalLink, FiSend, FiZap, FiHeart, FiGrid, FiUsers
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/components/auth-provider';
 
 export default function PublicProfilePage() {
     const { id } = useParams();
     const router = useRouter();
+    const { user } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('posts');
@@ -51,7 +53,7 @@ export default function PublicProfilePage() {
         return (
             <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col items-center justify-center space-y-4">
                 <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent animate-spin rounded-full shadow-2xl shadow-primary-500/20" />
-                <p className="font-black text-xs uppercase tracking-widest text-primary-600 animate-pulse">Scanning Squad Net...</p>
+                <p className="font-black text-xs uppercase tracking-widest text-primary-600 animate-pulse">Loading Profile...</p>
             </div>
         );
     }
@@ -109,14 +111,15 @@ export default function PublicProfilePage() {
 
                             {/* Actions Area */}
                             <div className="flex flex-col sm:flex-row gap-4 pb-4">
-                                {(profile.isOwnProfile || user?.role === 'admin') ? (
+                                {profile.isOwnProfile && (
                                     <button
-                                        onClick={() => router.push(`/profile${profile.isOwnProfile ? '' : `?userId=${id}`}`)}
+                                        onClick={() => router.push('/profile')}
                                         className="btn-primary py-3 px-10 rounded-2xl flex items-center gap-2 font-black shadow-2xl shadow-primary-500/30 group"
                                     >
-                                        <FiEdit3 className="group-hover:rotate-12 transition-transform" /> {profile.isOwnProfile ? 'Edit Identity' : 'Admin: Edit User'}
+                                        <FiEdit3 className="group-hover:rotate-12 transition-transform" /> Edit Identity
                                     </button>
-                                ) : (
+                                )}
+                                {!profile.isOwnProfile && (
                                     <div className="flex gap-3">
                                         <ConnectionButton userId={profile._id} initialStatus={connectionStatus} onStatusChange={(newStatus) => setConnectionStatus(newStatus)} />
 

@@ -32,7 +32,6 @@ function ProfileContent() {
     const { user, logout } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const targetUserId = searchParams.get('userId');
     const [activeTab, setActiveTab] = useState('posts');
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -52,10 +51,7 @@ function ProfileContent() {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const endpoint = (targetUserId && user?.role === 'admin')
-                    ? `/profiles/${targetUserId}`
-                    : '/profiles/me';
-                const res = await api.get(endpoint);
+                const res = await api.get('/profiles/me');
                 const p = res.data.data;
                 setProfileData(p);
                 setFormData({
@@ -146,17 +142,11 @@ function ProfileContent() {
         try {
             setLoading(true);
             const payload = { ...formData };
-            if (targetUserId && user?.role === 'admin') {
-                payload.targetUserId = targetUserId;
-            }
             await api.put('/profiles', payload);
             toast.success('Profile updated!');
             setIsEditing(false);
 
-            const endpoint = (targetUserId && user?.role === 'admin')
-                ? `/profiles/${targetUserId}`
-                : '/profiles/me';
-            const res = await api.get(endpoint);
+            const res = await api.get('/profiles/me');
             setProfileData(res.data.data);
         } catch (error) {
             toast.error('Update failed');
