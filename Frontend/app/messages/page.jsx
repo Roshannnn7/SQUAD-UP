@@ -33,21 +33,45 @@ export default function MessagesPage() {
                 const res = await api.get('/projects/my');
                 setSquads(res.data);
             } else {
-                // Real conversation fetching
-                const res = await api.get('/messages/conversations');
-                const chats = res.data.map(item => ({
+                // 1. Fetch real conversations from backend
+                const convRes = await api.get('/messages/conversations');
+                let chats = convRes.data.map(item => ({
                     id: item.user._id,
                     name: item.user.fullName,
                     photo: item.user.profilePhoto,
                     lastMessage: item.lastMessage,
                     time: new Date(item.createdAt).toLocaleDateString(),
-                    unread: item.unreadCount || 0
+                    unread: item.unreadCount || 0,
+                    isConnection: false
                 }));
+
+                // 2. Fetch connections to show potential/new DM partners
+                try {
+                    const connRes = await api.get('/connections?status=accepted');
+                    const connections = connRes.data.data;
+
+                    connections.forEach(conn => {
+                        const exists = chats.find(c => c.id === conn.user._id);
+                        if (!exists) {
+                            chats.push({
+                                id: conn.user._id,
+                                name: conn.user.fullName,
+                                photo: conn.user.profilePhoto,
+                                lastMessage: "Start a conversation!",
+                                time: "Connected",
+                                unread: 0,
+                                isConnection: true
+                            });
+                        }
+                    });
+                } catch (connErr) {
+                    console.error('Connections fetch error:', connErr);
+                }
+
                 setConversations(chats);
             }
         } catch (error) {
             console.error('Fetch error:', error);
-            // Fallback for demo if needed
         } finally {
             setLoading(false);
         }

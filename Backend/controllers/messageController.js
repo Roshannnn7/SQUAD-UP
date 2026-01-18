@@ -74,8 +74,35 @@ const getConversations = asyncHandler(async (req, res) => {
     res.json(Array.from(conversationMap.values()));
 });
 
+// @desc    Send private message
+// @route   POST /api/messages/private
+// @access  Private
+const sendMessage = asyncHandler(async (req, res) => {
+    const { receiverId, content, messageType, fileUrl } = req.body;
+
+    if (!receiverId || !content) {
+        res.status(400);
+        throw new Error('Please provide receiverId and content');
+    }
+
+    const message = await Message.create({
+        sender: req.user._id,
+        receiver: receiverId,
+        content,
+        messageType: messageType || 'text',
+        fileUrl,
+    });
+
+    const populatedMessage = await Message.findById(message._id)
+        .populate('sender', 'fullName profilePhoto')
+        .populate('receiver', 'fullName profilePhoto');
+
+    res.status(201).json(populatedMessage);
+});
+
 module.exports = {
     getProjectMessages,
     getPrivateMessages,
     getConversations,
+    sendMessage,
 };

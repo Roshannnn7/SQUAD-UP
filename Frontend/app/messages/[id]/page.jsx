@@ -97,6 +97,8 @@ export default function PrivateChatPage() {
 
         try {
             const conversationId = [user._id, id].sort().join('_');
+
+            // 1. Send to Firebase for real-time
             await addDoc(
                 collection(db, "conversations", conversationId, "messages"),
                 {
@@ -106,6 +108,13 @@ export default function PrivateChatPage() {
                     createdAt: serverTimestamp()
                 }
             );
+
+            // 2. Sync with backend MongoDB so it shows up in Inbox/Conversations list
+            await api.post('/messages/private', {
+                receiverId: id,
+                content: newMessage
+            });
+
             setNewMessage('');
         } catch (error) {
             console.error('Send error:', error);
