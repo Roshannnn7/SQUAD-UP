@@ -20,7 +20,7 @@ export default function PublicProfilePage() {
     const { user } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('posts');
+    const [activeTab, setActiveTab] = useState('mutual');
     const [connectionStatus, setConnectionStatus] = useState('none');
 
     useEffect(() => {
@@ -237,12 +237,6 @@ export default function PublicProfilePage() {
                     {/* Tabbed Activity Section */}
                     <div className="space-y-8">
                         <div className="flex gap-4 p-1.5 glassmorphism rounded-[2rem] w-fit">
-                            <button
-                                onClick={() => setActiveTab('posts')}
-                                className={`px-6 py-3 rounded-2xl text-xs font-black transition-all ${activeTab === 'posts' ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30' : 'text-gray-500 hover:bg-white/10'}`}
-                            >
-                                <FiGrid className="inline mr-2" /> Activity
-                            </button>
                             {profile.mutualSquads?.length > 0 && (
                                 <button
                                     onClick={() => setActiveTab('mutual')}
@@ -254,26 +248,7 @@ export default function PublicProfilePage() {
                         </div>
 
                         <AnimatePresence mode="wait">
-                            {activeTab === 'posts' && (
-                                <motion.div
-                                    key="posts"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="space-y-8"
-                                >
-                                    {profile.recentPosts?.length > 0 ? (
-                                        profile.recentPosts.map(post => (
-                                            <PostCard key={post._id} post={{ ...post, author: profile }} />
-                                        ))
-                                    ) : (
-                                        <div className="p-20 glassmorphism rounded-[3rem] text-center border-2 border-dashed border-primary-500/20">
-                                            <FiGrid className="w-16 h-16 mx-auto text-gray-200 mb-6" />
-                                            <h4 className="text-xl font-black text-gray-300">Quiet for now. Send a wave!</h4>
-                                        </div>
-                                    )}
-                                </motion.div>
-                            )}
+
 
                             {activeTab === 'mutual' && (
                                 <motion.div

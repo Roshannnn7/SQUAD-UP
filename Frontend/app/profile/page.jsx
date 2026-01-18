@@ -32,7 +32,7 @@ function ProfileContent() {
     const { user, logout } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [activeTab, setActiveTab] = useState('posts');
+    const [activeTab, setActiveTab] = useState('experience');
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -281,7 +281,6 @@ function ProfileContent() {
                         {/* Tabs */}
                         <div className="flex gap-4 p-1.5 glassmorphism rounded-[2rem] w-fit">
                             {[
-                                { id: 'posts', label: 'Feed Activity', icon: <FiGrid /> },
                                 { id: 'experience', label: 'Career Journey', icon: <FiBriefcase /> },
                                 { id: 'squads', label: 'Mutual Squads', icon: <FiUsers /> }
                             ].map(tab => (
@@ -306,25 +305,7 @@ function ProfileContent() {
                                 exit={{ opacity: 0, y: -20 }}
                                 className="min-h-[400px]"
                             >
-                                {activeTab === 'posts' && (
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                        {profileData?.recentPosts?.map((post, idx) => (
-                                            <div key={idx} className="group glassmorphism rounded-3xl p-4 aspect-square flex flex-col justify-between hover:border-primary-500/50 transition-all">
-                                                <p className="text-xs italic text-gray-400 line-clamp-4">{post.content}</p>
-                                                <div className="flex items-center justify-between mt-4">
-                                                    <span className="text-[10px] font-bold text-primary-500 flex items-center gap-1"><FiHeart className="fill-primary-500" /> {post.likeCount}</span>
-                                                    <span className="text-[10px] font-bold text-secondary-500 flex items-center gap-1"><FiMessageCircle /> {post.commentCount}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {(!profileData?.recentPosts || profileData.recentPosts.length === 0) && (
-                                            <div className="col-span-full py-20 text-center glassmorphism rounded-[2.5rem]">
-                                                <FiCamera className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                                                <p className="text-gray-400 font-bold">Nothing posted in the feed yet.</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+
 
                                 {activeTab === 'experience' && (
                                     <div className="space-y-6">
@@ -371,7 +352,7 @@ function ProfileContent() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm p-4"
-                        onClick={() => setActiveTab('posts')}
+                        onClick={() => setActiveTab('experience')}
                     >
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }}
@@ -384,7 +365,7 @@ function ProfileContent() {
                                 <span className="flex items-center gap-4"><FiLogOut /> Sign Out</span>
                                 <FiArrowRight className="group-hover:translate-x-2 transition-transform" />
                             </button>
-                            <button onClick={() => setActiveTab('posts')} className="w-full py-4 glassmorphism rounded-2xl font-black text-sm uppercase tracking-widest">Keep Vibe Alive</button>
+                            <button onClick={() => setActiveTab('experience')} className="w-full py-4 glassmorphism rounded-2xl font-black text-sm uppercase tracking-widest">Keep Vibe Alive</button>
                         </motion.div>
                     </motion.div>
                 )}
