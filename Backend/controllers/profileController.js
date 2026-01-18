@@ -120,9 +120,10 @@ const getUserProfile = async (req, res) => {
                 visibility: isOwnProfile ? { $in: ['public', 'connections', 'private'] } :
                     isConnected ? { $in: ['public', 'connections'] } : 'public',
             })
+                .select('content postType createdAt likeCount commentCount author mediaUrls hashtags')
+                .populate('author', 'fullName profilePhoto headline')
                 .sort({ createdAt: -1 })
-                .limit(5)
-                .select('content postType createdAt likeCount commentCount');
+                .limit(5);
 
             profileData.recentPosts = recentPosts;
         }
@@ -165,7 +166,7 @@ const getMyProfile = async (req, res) => {
             UserEducation.find({ user: userId }).sort({ startDate: -1 }),
             user.role === 'student' ? StudentProfile.findOne({ user: userId }) : null,
             user.role === 'mentor' ? MentorProfile.findOne({ user: userId }) : null,
-            Post.find({ author: userId }).sort({ createdAt: -1 }).limit(10)
+            Post.find({ author: userId }).sort({ createdAt: -1 }).limit(10).populate('author', 'fullName profilePhoto headline')
         ]);
 
         const profileData = user.toObject();

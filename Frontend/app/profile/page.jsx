@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import api from '@/lib/axios';
@@ -17,6 +17,18 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ProfilePage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                <div className="animate-spin h-12 w-12 border-b-2 border-primary-600 rounded-full" />
+            </div>
+        }>
+            <ProfileContent />
+        </Suspense>
+    );
+}
+
+function ProfileContent() {
     const { user, logout } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -340,13 +352,19 @@ export default function ProfilePage() {
                                 )}
 
                                 {activeTab === 'squads' && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Placeholder for Mutual Squads feature */}
-                                        <div className="glassmorphism p-10 rounded-[2.5rem] flex flex-col items-center justify-center col-span-full text-center">
-                                            <div className="w-16 h-16 bg-secondary-500/10 rounded-full flex items-center justify-center text-secondary-500 mb-6 text-3xl"><FiUsers /></div>
-                                            <h4 className="font-bold text-xl mb-4 text-secondary-500">Squad Discovery Coming Soon!</h4>
-                                            <p className="text-sm text-gray-500 max-w-sm">We're building a feature to show you shared study groups, hackathon teams, and creative collectives.</p>
-                                        </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {profileData?.mutualSquads?.map(squad => (
+                                            <Link href={`/squads/${squad._id}`} key={squad._id} className="p-4 bg-white/50 dark:bg-gray-900/50 rounded-2xl border border-white/20 hover:scale-[1.02] transition-all group">
+                                                <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-primary-500">{squad.name}</h4>
+                                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter mt-1">{squad.category} • {squad.status}</p>
+                                            </Link>
+                                        ))}
+                                        {(!profileData?.mutualSquads || profileData.mutualSquads.length === 0) && (
+                                            <div className="col-span-full py-10 text-center opacity-40">
+                                                <div className="w-16 h-16 bg-secondary-500/10 rounded-full flex items-center justify-center text-secondary-500 mx-auto mb-4 text-2xl"><FiUsers /></div>
+                                                <p className="text-sm font-bold">No mutual squads found.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </motion.div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/axios';
-import { FiBell, FiX, FiCheck, FiInfo, FiCalendar, FiMessageSquare } from 'react-icons/fi';
+import { FiBell, FiX, FiCheck, FiInfo, FiCalendar, FiMessageSquare, FiUsers } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 
