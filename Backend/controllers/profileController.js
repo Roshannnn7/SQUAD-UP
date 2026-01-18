@@ -5,6 +5,7 @@ const UserExperience = require('../models/UserExperience');
 const UserEducation = require('../models/UserEducation');
 const Connection = require('../models/Connection');
 const Post = require('../models/Post');
+const Project = require('../models/Project');
 
 // @desc    Get user profile (public view with privacy controls)
 // @route   GET /api/profiles/:userId
@@ -159,11 +160,12 @@ const getMyProfile = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const [experiences, education, studentInfo, mentorInfo] = await Promise.all([
+        const [experiences, education, studentInfo, mentorInfo, recentPosts] = await Promise.all([
             UserExperience.find({ user: userId }).sort({ startDate: -1 }),
             UserEducation.find({ user: userId }).sort({ startDate: -1 }),
             user.role === 'student' ? StudentProfile.findOne({ user: userId }) : null,
             user.role === 'mentor' ? MentorProfile.findOne({ user: userId }) : null,
+            Post.find({ author: userId }).sort({ createdAt: -1 }).limit(10)
         ]);
 
         const profileData = user.toObject();
@@ -171,6 +173,7 @@ const getMyProfile = async (req, res) => {
         profileData.education = education;
         profileData.studentInfo = studentInfo;
         profileData.mentorInfo = mentorInfo;
+        profileData.recentPosts = recentPosts;
         profileData.isOwnProfile = true;
 
         res.status(200).json({
@@ -188,8 +191,9 @@ const getMyProfile = async (req, res) => {
 // @access  Private
 const updateUserProfile = async (req, res) => {
     try {
-        const userId = req.user._id;
+        let userId = req.user._id;
         const {
+            targetUserId,
             fullName,
             headline,
             bio,
@@ -203,6 +207,11 @@ const updateUserProfile = async (req, res) => {
             profilePhoto,
             coverPhoto,
         } = req.body;
+
+        // If admin is updating another user
+        if (targetUserId && req.user.role === 'admin') {
+            userId = targetUserId;
+        }
 
         const user = await User.findById(userId);
 

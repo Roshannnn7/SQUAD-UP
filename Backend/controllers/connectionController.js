@@ -16,8 +16,8 @@ const sendConnectionRequest = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check if recipient allows connection requests
-        if (!recipient.privacy?.allowConnectionRequests) {
+        // Check if recipient allows connection requests (default to true if missing)
+        if (recipient.privacy?.allowConnectionRequests === false) {
             return res.status(403).json({ message: 'This user is not accepting connection requests' });
         }
 

@@ -59,6 +59,38 @@ export default function ConnectionButton({ userId, initialStatus = 'none', onSta
         }
     };
 
+    const handleAccept = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get(`/connections/status/${userId}`);
+            const connectionId = res.data.data.connection?._id;
+            await api.put(`/connections/accept/${connectionId}`);
+            setStatus('accepted');
+            toast.success('Connection accepted!');
+            if (onStatusChange) onStatusChange('accepted');
+        } catch (error) {
+            toast.error('Failed to accept request');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleReject = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get(`/connections/status/${userId}`);
+            const connectionId = res.data.data.connection?._id;
+            await api.put(`/connections/reject/${connectionId}`);
+            setStatus('none');
+            toast.success('Request rejected');
+            if (onStatusChange) onStatusChange('none');
+        } catch (error) {
+            toast.error('Failed to reject request');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <button disabled className="p-2 px-6 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 flex items-center space-x-2 animate-pulse">
@@ -79,13 +111,31 @@ export default function ConnectionButton({ userId, initialStatus = 'none', onSta
     }
 
     if (status === 'pending') {
+        if (isRequester) {
+            return (
+                <button
+                    onClick={handleRemove}
+                    className="p-2 px-6 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-800 flex items-center space-x-2 hover:bg-amber-100 transition-colors font-bold text-sm"
+                >
+                    <FiClock /> <span>Pending Approval</span>
+                </button>
+            );
+        }
         return (
-            <button
-                onClick={isRequester ? handleRemove : undefined}
-                className="p-2 px-6 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-800 flex items-center space-x-2 hover:bg-amber-100 transition-colors font-bold text-sm"
-            >
-                <FiClock /> <span>{isRequester ? 'Pending Approval' : 'Review Request'}</span>
-            </button>
+            <div className="flex gap-2">
+                <button
+                    onClick={handleAccept}
+                    className="p-2 px-6 rounded-2xl bg-primary-600 text-white flex items-center space-x-2 hover:bg-primary-700 transition-colors font-bold text-sm"
+                >
+                    <FiUserPlus /> <span>Accept</span>
+                </button>
+                <button
+                    onClick={handleReject}
+                    className="p-2 px-6 rounded-2xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors font-bold text-sm"
+                >
+                    <FiUserX /> <span>Reject</span>
+                </button>
+            </div>
         );
     }
 

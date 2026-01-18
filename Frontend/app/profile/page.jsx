@@ -14,11 +14,13 @@ import {
 import Link from 'next/link';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ProfilePage() {
     const { user, logout } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const targetUserId = searchParams.get('userId');
     const [activeTab, setActiveTab] = useState('posts');
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -38,7 +40,10 @@ export default function ProfilePage() {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const res = await api.get('/profiles/me');
+                const endpoint = (targetUserId && user?.role === 'admin')
+                    ? `/profiles/${targetUserId}`
+                    : '/profiles/me';
+                const res = await api.get(endpoint);
                 const p = res.data.data;
                 setProfileData(p);
                 setFormData({
@@ -128,10 +133,18 @@ export default function ProfilePage() {
     const handleUpdate = async () => {
         try {
             setLoading(true);
-            await api.put('/profiles', formData);
+            const payload = { ...formData };
+            if (targetUserId && user?.role === 'admin') {
+                payload.targetUserId = targetUserId;
+            }
+            await api.put('/profiles', payload);
             toast.success('Profile updated!');
             setIsEditing(false);
-            const res = await api.get('/profiles/me');
+
+            const endpoint = (targetUserId && user?.role === 'admin')
+                ? `/profiles/${targetUserId}`
+                : '/profiles/me';
+            const res = await api.get(endpoint);
             setProfileData(res.data.data);
         } catch (error) {
             toast.error('Update failed');

@@ -109,9 +109,12 @@ export default function PublicProfilePage() {
 
                             {/* Actions Area */}
                             <div className="flex flex-col sm:flex-row gap-4 pb-4">
-                                {profile.isOwnProfile ? (
-                                    <button onClick={() => router.push('/profile')} className="btn-primary py-3 px-10 rounded-2xl flex items-center gap-2 font-black shadow-2xl shadow-primary-500/30 group">
-                                        <FiEdit3 className="group-hover:rotate-12 transition-transform" /> Edit Identity
+                                {(profile.isOwnProfile || user?.role === 'admin') ? (
+                                    <button
+                                        onClick={() => router.push(`/profile${profile.isOwnProfile ? '' : `?userId=${id}`}`)}
+                                        className="btn-primary py-3 px-10 rounded-2xl flex items-center gap-2 font-black shadow-2xl shadow-primary-500/30 group"
+                                    >
+                                        <FiEdit3 className="group-hover:rotate-12 transition-transform" /> {profile.isOwnProfile ? 'Edit Identity' : 'Admin: Edit User'}
                                     </button>
                                 ) : (
                                     <div className="flex gap-3">
