@@ -42,10 +42,10 @@ export default function Navbar() {
 
     const navLinks = [
         { name: 'Dashboard', href: getDashboardHref(), icon: <FiHome /> },
+        { name: 'Feed', href: '/feed', icon: <FiMessageSquare /> },
         { name: 'Squads', href: '/squads', icon: <FiUsers /> },
+        { name: 'Students', href: '/directory', icon: <FiUsers /> },
         { name: 'Mentors', href: '/mentors', icon: <FiBookOpen /> },
-        { name: 'Messages', href: '/messages', icon: <FiMessageSquare /> },
-        { name: 'About', href: '/about', icon: <FiUser /> },
     ];
 
     return (

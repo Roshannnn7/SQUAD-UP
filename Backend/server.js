@@ -21,12 +21,15 @@ const errorHandler = require('./middleware/error');
 const app = express();
 const server = http.createServer(app);
 
-// Whitelisted origin (Primary Vercel URL)
-const FRONTEND_URL = "https://squadup-roshannnn7.vercel.app";
+// Whitelisted origins
+const ALLOWED_ORIGINS = [
+    "https://squadup-roshannnn7.vercel.app",
+    "http://localhost:3000"
+];
 
 /* 🔴 IMPORTANT: CORS FIRST */
 app.use(cors({
-    origin: FRONTEND_URL,
+    origin: ALLOWED_ORIGINS,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
@@ -82,6 +85,15 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/user-enhancements', userEnhancementRoutes);
+
+// Social Networking Routes
+const profileRoutes = require('./routes/profileRoutes');
+const connectionRoutes = require('./routes/connectionRoutes');
+const postRoutes = require('./routes/postRoutes');
+
+app.use('/api/profiles', profileRoutes);
+app.use('/api/connections', connectionRoutes);
+app.use('/api/posts', postRoutes);
 
 // Duplicate mounts for platform flexibility
 app.use('/auth', authRoutes);

@@ -97,6 +97,68 @@ const userSchema = mongoose.Schema(
                 default: true,
             },
         },
+        // Privacy Settings
+        privacy: {
+            profileVisibility: {
+                type: String,
+                enum: ['public', 'connections', 'private'],
+                default: 'public',
+            },
+            showEmail: {
+                type: Boolean,
+                default: false,
+            },
+            showSkills: {
+                type: Boolean,
+                default: true,
+            },
+            showProjects: {
+                type: Boolean,
+                default: true,
+            },
+            showConnections: {
+                type: Boolean,
+                default: true,
+            },
+            allowConnectionRequests: {
+                type: Boolean,
+                default: true,
+            },
+            allowMessages: {
+                type: String,
+                enum: ['everyone', 'connections', 'none'],
+                default: 'everyone',
+            },
+        },
+        // Profile Information
+        headline: {
+            type: String,
+            maxlength: 120,
+            default: '',
+        },
+        location: {
+            city: String,
+            state: String,
+            country: String,
+        },
+        pronouns: {
+            type: String,
+            maxlength: 50,
+            default: '',
+        },
+        // Connection Stats
+        connectionCount: {
+            type: Number,
+            default: 0,
+        },
+        followerCount: {
+            type: Number,
+            default: 0,
+        },
+        followingCount: {
+            type: Number,
+            default: 0,
+        },
         // Gamification
         points: {
             type: Number,

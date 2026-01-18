@@ -7,9 +7,13 @@ const notificationSchema = mongoose.Schema(
             ref: 'User',
             required: true,
         },
+        sender: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
         title: {
             type: String,
-            required: true,
+            default: 'Notification',
         },
         message: {
             type: String,
@@ -17,7 +21,7 @@ const notificationSchema = mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ['booking', 'message', 'project', 'system', 'mentor'],
+            enum: ['booking', 'message', 'project', 'system', 'mentor', 'connection_request', 'connection_accepted', 'achievement', 'reaction'],
             required: true,
         },
         relatedId: {
