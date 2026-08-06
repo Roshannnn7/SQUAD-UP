@@ -17,6 +17,7 @@ const {
     getSquadRules,
     createSquadRule,
     updateSquadRule,
+    deleteSquadRule,
     togglePinMessage,
     getActivityLogs,
     syncGitHubCollaborators,
