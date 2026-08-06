@@ -95,6 +95,17 @@ app.use('/api/profiles', profileRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/posts', postRoutes);
 
+// 🚀 New Feature Routes
+const leaderboardRoutes = require('./routes/leaderboardRoutes');
+const standupRoutes = require('./routes/standupRoutes');
+const skillChallengeRoutes = require('./routes/skillChallengeRoutes');
+const milestoneRoutes = require('./routes/milestoneRoutes');
+
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/standups', standupRoutes);
+app.use('/api/challenges', skillChallengeRoutes);
+app.use('/api/milestones', milestoneRoutes);
+
 // Duplicate mounts for platform flexibility
 app.use('/auth', authRoutes);
 

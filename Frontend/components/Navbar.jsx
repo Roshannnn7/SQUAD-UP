@@ -18,7 +18,9 @@ import {
     FiSun,
     FiMoon,
     FiMenu,
-    FiX
+    FiX,
+    FiTrendingUp,
+    FiZap
 } from 'react-icons/fi';
 
 export default function Navbar() {
@@ -46,6 +48,7 @@ export default function Navbar() {
         { name: 'Squads', href: '/squads', icon: <FiUsers /> },
         { name: 'Students', href: '/directory', icon: <FiUsers /> },
         { name: 'Mentors', href: '/mentors', icon: <FiBookOpen /> },
+        { name: 'Leaderboard', href: '/leaderboard', icon: <FiTrendingUp /> },
     ];
 
     return (
@@ -109,7 +112,20 @@ export default function Navbar() {
                                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                                 {user?.email}
                                             </p>
+                                            <div className="flex items-center gap-1 mt-1">
+                                                <FiZap className="w-3 h-3 text-violet-500" />
+                                                <span className="text-xs font-bold text-violet-500">{(user?.points || 0).toLocaleString()} XP</span>
+                                                <span className="text-gray-400 text-xs">· Lv.{user?.level || 1}</span>
+                                            </div>
                                         </div>
+                                        <Link
+                                            href={`/portfolio/${user?._id || user?.id}`}
+                                            className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                            onClick={() => setIsProfileOpen(false)}
+                                        >
+                                            <FiUser />
+                                            <span>My Portfolio</span>
+                                        </Link>
                                         <Link
                                             href="/profile"
                                             className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -117,6 +133,14 @@ export default function Navbar() {
                                         >
                                             <FiUser />
                                             <span>Profile Settings</span>
+                                        </Link>
+                                        <Link
+                                            href="/leaderboard"
+                                            className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                            onClick={() => setIsProfileOpen(false)}
+                                        >
+                                            <FiTrendingUp />
+                                            <span>Leaderboard</span>
                                         </Link>
                                         <button
                                             onClick={handleLogout}

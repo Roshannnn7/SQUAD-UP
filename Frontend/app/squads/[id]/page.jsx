@@ -20,7 +20,10 @@ import {
     FiClock,
     FiList,
     FiActivity,
+    FiMap,
+    FiZap,
 } from 'react-icons/fi';
+import { BsClipboardCheck, BsLightning } from 'react-icons/bs';
 import Link from 'next/link';
 
 export default function SquadDetailPage() {
@@ -33,6 +36,12 @@ export default function SquadDetailPage() {
     const [joining, setJoining] = useState(false);
     const [joinReason, setJoinReason] = useState('');
     const [showJoinModal, setShowJoinModal] = useState(false);
+
+    // GitHub Sync state
+    const [showGithubModal, setShowGithubModal] = useState(false);
+    const [githubToken, setGithubToken] = useState('');
+    const [syncingGithub, setSyncingGithub] = useState(false);
+    const [syncResults, setSyncResults] = useState(null);
 
     useEffect(() => {
         fetchProjectDetails();
@@ -105,10 +114,29 @@ export default function SquadDetailPage() {
         }
     };
 
+    const handleGithubSync = async () => {
+        if (!githubToken.trim()) {
+            toast.error('Please enter your GitHub Personal Access Token');
+            return;
+        }
+
+        try {
+            setSyncingGithub(true);
+            const res = await api.post(`/projects/${id}/github/sync`, { githubToken });
+            setSyncResults(res.data.results);
+            toast.success(res.data.message || 'GitHub sync completed!');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to sync with GitHub');
+        } finally {
+            setSyncingGithub(false);
+        }
+    };
+
     const getRoleBadge = (role) => {
         const badges = {
             admin: { icon: FiShield, color: 'text-red-600 bg-red-100 dark:bg-red-900/30', label: 'Admin' },
             moderator: { icon: FiStar, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30', label: 'Moderator' },
+            mentor: { icon: FiStar, color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200', label: 'Mentor' },
             member: { icon: FiUsers, color: 'text-gray-600 bg-gray-100 dark:bg-gray-800', label: 'Member' },
         };
         const badge = badges[role] || badges.member;
@@ -312,6 +340,84 @@ export default function SquadDetailPage() {
                             </div>
                         </div>
 
+                        {/* Squad Tools */}
+                        {isMember && (
+                            <div className="glassmorphism rounded-2xl p-6">
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <FiZap className="text-violet-500" />
+                                    Squad Tools
+                                </h2>
+                                <div className="space-y-2">
+                                    <Link href={`/squads/${id}/tasks`}
+                                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
+                                        <span className="text-lg">🎯</span>
+                                        <div>
+                                            <p className="text-sm font-bold">Task Board</p>
+                                            <p className="text-xs text-gray-400">Assign & track tasks</p>
+                                        </div>
+                                    </Link>
+                                    <Link href={`/squads/${id}/standup`}
+                                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
+                                        <span className="text-lg">📋</span>
+                                        <div>
+                                            <p className="text-sm font-bold">Daily Stand-up</p>
+                                            <p className="text-xs text-gray-400">Post your check-in</p>
+                                        </div>
+                                    </Link>
+                                    <Link href={`/squads/${id}/challenges`}
+                                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
+                                        <span className="text-lg">🧪</span>
+                                        <div>
+                                            <p className="text-sm font-bold">Skill Lab</p>
+                                            <p className="text-xs text-gray-400">Challenges & competitions</p>
+                                        </div>
+                                    </Link>
+                                    <Link href={`/squads/${id}/roadmap`}
+                                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
+                                        <FiMap className="text-lg" />
+                                        <div>
+                                            <p className="text-sm font-bold">Roadmap</p>
+                                            <p className="text-xs text-gray-400">Milestones & planning</p>
+                                        </div>
+                                    </Link>
+                                    <Link href={`/squads/${id}/chat`}
+                                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
+                                        <span className="text-lg">💬</span>
+                                        <div>
+                                            <p className="text-sm font-bold">Squad Chat</p>
+                                            <p className="text-xs text-gray-400">Discuss & share files</p>
+                                        </div>
+                                    </Link>
+                                    <Link href={`/squads/${id}/resources`}
+                                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
+                                        <span className="text-lg">📂</span>
+                                        <div>
+                                            <p className="text-sm font-bold">Resource Hub</p>
+                                            <p className="text-xs text-gray-400">Links, APIs, Docs</p>
+                                        </div>
+                                    </Link>
+                                    <Link href={`/squads/${id}/mentors`}
+                                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
+                                        <span className="text-lg">🤝</span>
+                                        <div>
+                                            <p className="text-sm font-bold">Squad Mentors</p>
+                                            <p className="text-xs text-gray-400">Invite expert guidance</p>
+                                        </div>
+                                    </Link>
+                                    {isAdmin && project.githubRepo && (
+                                        <button onClick={() => { setShowGithubModal(true); setSyncResults(null); }}
+                                            className="w-full text-left flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
+                                            <FiGithub className="text-lg" />
+                                            <div>
+                                                <p className="text-sm font-bold">GitHub Sync</p>
+                                                <p className="text-xs text-gray-400">Add members to repo</p>
+                                            </div>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Quick Stats */}
                         <div className="glassmorphism rounded-2xl p-6">
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -382,6 +488,132 @@ export default function SquadDetailPage() {
                                 Cancel
                             </button>
                         </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* GitHub Sync Modal */}
+            {showGithubModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="glassmorphism rounded-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                    >
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <FiGithub /> Sync Repository
+                        </h2>
+                        
+                        {!syncResults ? (
+                            <>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                                    Easily add all your squad members as collaborators to the repository <strong>{project.githubRepo?.split('/').pop()}</strong>.
+                                </p>
+                                
+                                <div className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 p-4 rounded-xl text-sm mb-6 border border-yellow-200 dark:border-yellow-700/30">
+                                    <p className="font-bold mb-1">How to get a Token:</p>
+                                    <ol className="list-decimal pl-5 space-y-1 text-xs">
+                                        <li>Go to GitHub Settings &gt; Developer settings &gt; Personal access tokens &gt; Tokens (classic)</li>
+                                        <li>Generate new token with the <strong>repo</strong> scope</li>
+                                        <li>Paste it here. We don't store it for security reasons.</li>
+                                    </ol>
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Personal Access Token</label>
+                                    <input
+                                        type="password"
+                                        value={githubToken}
+                                        onChange={(e) => setGithubToken(e.target.value)}
+                                        placeholder="ghp_..."
+                                        className="input-field w-full"
+                                    />
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleGithubSync}
+                                        disabled={syncingGithub || !githubToken}
+                                        className="btn-primary flex-1 flex items-center justify-center gap-2"
+                                    >
+                                        {syncingGithub ? (
+                                            <>
+                                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                                                Syncing...
+                                            </>
+                                        ) : 'Sync Collaborators'}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowGithubModal(false)}
+                                        disabled={syncingGithub}
+                                        className="btn-secondary"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="space-y-6">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Sync completed! Here are the results:
+                                </p>
+
+                                {/* Success */}
+                                {syncResults.successful.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-bold text-green-600 mb-2">Successfully Added/Invited</h3>
+                                        <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-3 space-y-2 border border-green-100 dark:border-green-900/30">
+                                            {syncResults.successful.map((r, i) => (
+                                                <div key={i} className="flex justify-between text-sm">
+                                                    <span className="font-semibold">{r.name}</span>
+                                                    <span className="text-green-600">{r.status}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Missing Username */}
+                                {syncResults.missingUsername.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-bold text-yellow-600 mb-2">Missing GitHub Username</h3>
+                                        <div className="bg-yellow-50 dark:bg-yellow-900/10 rounded-xl p-3 space-y-2 border border-yellow-100 dark:border-yellow-900/30">
+                                            {syncResults.missingUsername.map((r, i) => (
+                                                <div key={i} className="flex justify-between text-sm">
+                                                    <span className="font-semibold">{r.name}</span>
+                                                    <span className="text-yellow-600 text-xs">Profile unlinked</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Failed */}
+                                {syncResults.failed.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-bold text-red-600 mb-2">Failed to Add</h3>
+                                        <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-3 space-y-2 border border-red-100 dark:border-red-900/30">
+                                            {syncResults.failed.map((r, i) => (
+                                                <div key={i} className="text-sm">
+                                                    <div className="flex justify-between">
+                                                        <span className="font-semibold">{r.name}</span>
+                                                        <span className="text-red-600 text-xs">Failed</span>
+                                                    </div>
+                                                    <p className="text-xs text-red-400 mt-0.5">{r.reason}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={() => setShowGithubModal(false)}
+                                    className="btn-secondary w-full"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        )}
                     </motion.div>
                 </div>
             )}

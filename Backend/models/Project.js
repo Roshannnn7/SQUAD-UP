@@ -22,7 +22,7 @@ const projectSchema = mongoose.Schema(
             },
             role: {
                 type: String,
-                enum: ['admin', 'moderator', 'member'],
+                enum: ['admin', 'moderator', 'member', 'mentor'],
                 default: 'member',
             },
             joinedAt: {
@@ -100,6 +100,21 @@ const projectSchema = mongoose.Schema(
             type: Number,
             default: 0,
         },
+        // Shared Resources / Asset Hub
+        resources: [{
+            title: { type: String, required: true },
+            url: { type: String, required: true },
+            category: { 
+                type: String, 
+                enum: ['design', 'docs', 'database', 'code', 'other'],
+                default: 'other'
+            },
+            addedBy: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+            },
+            addedAt: { type: Date, default: Date.now },
+        }],
         // Analytics
         analytics: {
             messageCount: {

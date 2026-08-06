@@ -7,6 +7,7 @@ const SquadRule = require('../models/SquadRule');
 const JoinRequest = require('../models/JoinRequest');
 const Report = require('../models/Report');
 const crypto = require('crypto');
+const axios = require('axios'); // Add axios for GitHub API calls
 
 // @desc    Create a new project
 // @route   POST /api/projects
@@ -828,6 +829,213 @@ const getActivityLogs = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Sync squad members to GitHub repository
+// @route   POST /api/projects/:id/github/sync
+// @access  Protected (Admin only)
+const syncGitHubCollaborators = asyncHandler(async (req, res) => {
+    const { githubToken } = req.body;
+    
+    if (!githubToken) {
+        res.status(400);
+        throw new Error('GitHub Personal Access Token is required');
+    }
+
+    const project = await Project.findById(req.params.id).populate('members.user');
+    
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    // Check if user is admin
+    const userMember = project.members.find(
+        (m) => m.user._id.toString() === req.user._id.toString()
+    );
+
+    if (!userMember || userMember.role !== 'admin') {
+        res.status(403);
+        throw new Error('Only squad admins can sync GitHub collaborators');
+    }
+
+    if (!project.githubRepo) {
+        res.status(400);
+        throw new Error('No GitHub repository linked to this squad');
+    }
+
+    // Extract owner and repo from URL (e.g., https://github.com/owner/repo)
+    let owner, repoName;
+    try {
+        const urlParts = project.githubRepo.replace(/\/$/, '').split('/');
+        repoName = urlParts.pop();
+        owner = urlParts.pop();
+        if (!owner || !repoName) throw new Error('Invalid URL');
+    } catch (err) {
+        res.status(400);
+        throw new Error('Invalid GitHub repository URL format. Expected: https://github.com/owner/repo');
+    }
+
+    const results = {
+        successful: [],
+        failed: [],
+        missingUsername: []
+    };
+
+    // Iterate through members and add them
+    for (const member of project.members) {
+        // Skip the admin who is syncing
+        if (member.user._id.toString() === req.user._id.toString()) continue;
+
+        const githubUsername = member.user.socialLinks?.github?.split('/').pop();
+
+        if (!githubUsername) {
+            results.missingUsername.push({
+                name: member.user.fullName,
+                id: member.user._id
+            });
+            continue;
+        }
+
+        try {
+            const response = await axios.put(
+                `https://api.github.com/repos/${owner}/${repoName}/collaborators/${githubUsername}`,
+                { permission: 'push' },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'X-GitHub-Api-Version': '2022-11-28'
+                    }
+                }
+            );
+
+            // 201 Created (invited) or 204 No Content (already a collaborator)
+            results.successful.push({
+                name: member.user.fullName,
+                username: githubUsername,
+                status: response.status === 201 ? 'Invited' : 'Already added'
+            });
+        } catch (error) {
+            results.failed.push({
+                name: member.user.fullName,
+                username: githubUsername,
+                reason: error.response?.data?.message || 'Unknown error'
+            });
+        }
+    }
+
+    res.json({
+        message: 'GitHub sync completed',
+        results
+    });
+});
+
+// @desc    Add resource to project
+// @route   POST /api/projects/:id/resources
+// @access  Protected (Members only)
+const addResource = asyncHandler(async (req, res) => {
+    const { title, url, category } = req.body;
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    const isMember = project.members.some(m => m.user.toString() === req.user._id.toString());
+    if (!isMember) {
+        res.status(403);
+        throw new Error('Only members can add resources');
+    }
+
+    project.resources.push({
+        title,
+        url,
+        category,
+        addedBy: req.user._id
+    });
+
+    await project.save();
+    
+    // Repopulate user info for new resource
+    const updatedProject = await Project.findById(project._id).populate('resources.addedBy', 'fullName profilePhoto');
+
+    res.status(201).json(updatedProject.resources);
+});
+
+// @desc    Delete resource from project
+// @route   DELETE /api/projects/:id/resources/:resourceId
+// @access  Protected (Resource owner or Admin)
+const deleteResource = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    const resource = project.resources.id(req.params.resourceId);
+    if (!resource) {
+        res.status(404);
+        throw new Error('Resource not found');
+    }
+
+    const userMember = project.members.find(m => m.user.toString() === req.user._id.toString());
+    const isOwner = resource.addedBy.toString() === req.user._id.toString();
+    const isAdmin = userMember && ['admin', 'moderator'].includes(userMember.role);
+
+    if (!isOwner && !isAdmin) {
+        res.status(403);
+        throw new Error('Not authorized to delete this resource');
+    }
+
+    resource.deleteOne();
+    await project.save();
+
+    res.json({ message: 'Resource removed' });
+});
+
+// @desc    Invite a mentor to the squad
+// @route   POST /api/projects/:id/mentors/invite
+// @access  Protected (Admin only)
+const inviteMentor = asyncHandler(async (req, res) => {
+    const { mentorId } = req.body; // User ID of the mentor
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    const userMember = project.members.find(m => m.user.toString() === req.user._id.toString());
+    if (!userMember || userMember.role !== 'admin') {
+        res.status(403);
+        throw new Error('Only admins can invite mentors');
+    }
+
+    // Verify mentor exists and has mentor role
+    const mentorUser = await User.findById(mentorId);
+    if (!mentorUser || mentorUser.role !== 'mentor') {
+        res.status(400);
+        throw new Error('User is not a valid mentor');
+    }
+
+    // Check if already in squad
+    if (project.members.some(m => m.user.toString() === mentorId)) {
+        res.status(400);
+        throw new Error('Mentor is already in the squad');
+    }
+
+    // Add mentor to squad (bypassing approval for MVP speed)
+    project.members.push({
+        user: mentorId,
+        role: 'mentor'
+    });
+
+    await project.save();
+
+    res.json({ message: 'Mentor successfully added to squad!' });
+});
+
 module.exports = {
     createProject,
     getProjects,
@@ -848,4 +1056,8 @@ module.exports = {
     deleteSquadRule,
     togglePinMessage,
     getActivityLogs,
+    syncGitHubCollaborators,
+    addResource,
+    deleteResource,
+    inviteMentor,
 };

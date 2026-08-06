@@ -5,17 +5,20 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth-provider';
 import Navbar from '@/components/Navbar';
 import api from '@/lib/axios';
+import SquadMatchCard from '@/components/SquadMatchCard';
 import {
     FiPlus,
-    FiSearch,
     FiTrendingUp,
     FiClock,
     FiCheckCircle,
     FiMessageSquare,
     FiArrowRight,
     FiUsers,
-    FiStar
+    FiStar,
+    FiZap,
+    FiAward
 } from 'react-icons/fi';
+import { BsFire } from 'react-icons/bs';
 import Link from 'next/link';
 
 export default function StudentDashboard() {
@@ -51,10 +54,10 @@ export default function StudentDashboard() {
     }, []);
 
     const stats = [
-        { label: 'Active Squads', value: projects.length.toString(), icon: <FiTrendingUp />, color: 'text-blue-600', bg: 'bg-blue-100' },
-        { label: 'Upcoming Sessions', value: bookings.length.toString(), icon: <FiClock />, color: 'text-purple-600', bg: 'bg-purple-100' },
-        { label: 'Unread Alerts', value: unreadCount.toString(), icon: <FiMessageSquare />, color: 'text-orange-600', bg: 'bg-orange-100' },
-        { label: 'Achievements', value: '4', icon: <FiCheckCircle />, color: 'text-green-600', bg: 'bg-green-100' },
+        { label: 'Active Squads', value: projects.length.toString(), icon: <FiTrendingUp />, color: 'text-blue-600', bg: 'bg-blue-100', href: '/squads' },
+        { label: 'Upcoming Sessions', value: bookings.length.toString(), icon: <FiClock />, color: 'text-purple-600', bg: 'bg-purple-100', href: '/bookings' },
+        { label: 'XP Points', value: (user?.points || 0).toLocaleString(), icon: <FiZap />, color: 'text-violet-600', bg: 'bg-violet-100', href: '/leaderboard' },
+        { label: 'Day Streak', value: `${user?.streak?.current || 0}🔥`, icon: <FiAward />, color: 'text-orange-600', bg: 'bg-orange-100', href: '/leaderboard' },
     ];
 
     return (
@@ -163,53 +166,68 @@ export default function StudentDashboard() {
                         </div>
                     </div>
 
-                    {/* Sidebar: Suggested Mentors & Quick Links */}
-                    <div className="space-y-10">
-                        {/* Suggested Mentors */}
-                        <div className="glassmorphism p-8 rounded-[40px] border border-gray-100 dark:border-gray-800">
-                            <div className="flex items-center justify-between mb-8">
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mentors</h2>
-                                <Link href="/mentors" className="text-xs font-bold text-primary-600 uppercase tracking-widest">
-                                    View All
-                                </Link>
+                    {/* Sidebar */}
+                    <div className="space-y-8">
+                        {/* AI Squad Match */}
+                        <SquadMatchCard />
+
+                        {/* Leaderboard Teaser */}
+                        <Link
+                            href="/leaderboard"
+                            className="block relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-6 rounded-[32px] text-white shadow-2xl group hover:-translate-y-1 transition-all"
+                        >
+                            <div className="absolute top-0 right-0 text-[80px] opacity-10 group-hover:opacity-20 transition-opacity leading-none">🏆</div>
+                            <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-1">Your Rank</p>
+                            <p className="text-4xl font-black mb-1">{(user?.points || 0).toLocaleString()} <span className="text-lg font-bold text-white/60">XP</span></p>
+                            <p className="text-white/70 text-sm mb-5">Lv.{user?.level || 1} · {user?.streak?.current || 0} day streak 🔥</p>
+                            <div className="flex items-center gap-2 text-sm font-bold">
+                                <span>View Leaderboard</span>
+                                <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
                             </div>
-                            <div className="space-y-6">
+                        </Link>
+
+                        {/* Suggested Mentors */}
+                        <div className="glassmorphism p-6 rounded-[32px] border border-gray-100 dark:border-gray-800">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Top Mentors</h2>
+                                <Link href="/mentors" className="text-xs font-bold text-primary-600 uppercase tracking-widest">View All</Link>
+                            </div>
+                            <div className="space-y-4">
                                 {loading ? (
-                                    [1, 2].map(i => <div key={i} className="h-20 skeleton rounded-2xl" />)
+                                    [1, 2].map(i => <div key={i} className="h-16 skeleton rounded-2xl" />)
                                 ) : mentors.map((mentor) => (
-                                    <Link href={`/mentors/${mentor.user?._id}`} key={mentor._id} className="flex items-center space-x-4 group">
+                                    <Link href={`/mentors/${mentor.user?._id}`} key={mentor._id} className="flex items-center space-x-3 group">
                                         <div className="relative">
                                             <img
                                                 src={mentor.user?.profilePhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mentor.user?.fullName}`}
-                                                className="w-12 h-12 rounded-2xl border-2 border-white shadow-sm"
+                                                className="w-10 h-10 rounded-xl border-2 border-white shadow-sm"
                                                 alt=""
                                             />
-                                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+                                            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-primary-600 transition-colors">{mentor.user?.fullName}</h4>
-                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest truncate">{mentor.expertise?.[0]} Specialist</p>
+                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest truncate">{mentor.expertise?.[0]}</p>
                                         </div>
                                         <div className="text-yellow-500 font-bold text-xs flex items-center">
-                                            <FiStar className="fill-current mr-1" />
-                                            {mentor.rating}
+                                            <FiStar className="fill-current mr-0.5" />{mentor.rating}
                                         </div>
                                     </Link>
                                 ))}
                             </div>
-                            <Link href="/mentors" className="w-full mt-8 py-4 bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 rounded-2xl text-xs font-bold hover:bg-primary-50 hover:text-primary-600 transition-all flex items-center justify-center gap-2">
+                            <Link href="/mentors" className="w-full mt-6 py-3 bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 rounded-2xl text-xs font-bold hover:bg-primary-50 hover:text-primary-600 transition-all flex items-center justify-center gap-2">
                                 Find more mentors <FiArrowRight />
                             </Link>
                         </div>
 
                         {/* Quick CTA */}
-                        <div className="relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800 p-8 rounded-[40px] text-white shadow-2xl group">
-                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 transition-transform">
-                                <FiPlus className="w-20 h-20" />
+                        <div className="relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800 p-7 rounded-[32px] text-white shadow-2xl group">
+                            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-125 transition-transform">
+                                <FiPlus className="w-16 h-16" />
                             </div>
-                            <h3 className="text-2xl font-bold mb-4">Start your own Squad?</h3>
-                            <p className="text-white/70 text-sm mb-8 leading-relaxed">Assemble your dream team and start building tomorrow's tech today.</p>
-                            <Link href="/squads/create" className="w-full inline-flex items-center justify-center space-x-2 py-4 bg-white text-primary-600 rounded-2xl font-bold hover:bg-gray-100 transition-all active:scale-95">
+                            <h3 className="text-xl font-bold mb-3">Start your own Squad?</h3>
+                            <p className="text-white/70 text-sm mb-6 leading-relaxed">Assemble your dream team and build together.</p>
+                            <Link href="/squads/create" className="w-full inline-flex items-center justify-center space-x-2 py-3 bg-white text-primary-600 rounded-2xl font-bold hover:bg-gray-100 transition-all active:scale-95">
                                 <span>Get Started</span>
                                 <FiArrowRight />
                             </Link>

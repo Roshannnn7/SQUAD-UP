@@ -17,9 +17,12 @@ const {
     getSquadRules,
     createSquadRule,
     updateSquadRule,
-    deleteSquadRule,
     togglePinMessage,
     getActivityLogs,
+    syncGitHubCollaborators,
+    addResource,
+    deleteResource,
+    inviteMentor,
 } = require('../controllers/projectController');
 const { protect } = require('../middleware/auth');
 
@@ -55,5 +58,15 @@ router.put('/:id/messages/:messageId/pin', protect, togglePinMessage);
 
 // Activity logs
 router.get('/:id/activity', protect, getActivityLogs);
+
+// GitHub Integration
+router.post('/:id/github/sync', protect, syncGitHubCollaborators);
+
+// Resources
+router.post('/:id/resources', protect, addResource);
+router.delete('/:id/resources/:resourceId', protect, deleteResource);
+
+// Mentors
+router.post('/:id/mentors/invite', protect, inviteMentor);
 
 module.exports = router;

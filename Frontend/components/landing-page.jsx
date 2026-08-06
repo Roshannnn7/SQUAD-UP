@@ -1,40 +1,82 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FiUsers, FiVideo, FiCalendar, FiMessageSquare, FiGitMerge, FiStar, FiInstagram, FiLinkedin, FiGithub } from 'react-icons/fi';
+import { FiUsers, FiVideo, FiCalendar, FiMessageSquare, FiGitMerge, FiStar, FiInstagram, FiLinkedin, FiGithub, FiTrendingUp, FiZap, FiMap, FiMic } from 'react-icons/fi';
 import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
 
 const features = [
     {
         icon: <FiUsers className="w-8 h-8" />,
-        title: 'Collaborative Projects',
-        description: 'Join or create project squads with students sharing similar interests and skills.',
+        title: 'Collaborative Squads',
+        description: 'Join or create project squads with students sharing similar skills. AI-powered matching finds your best fit.',
+        badge: null,
+    },
+    {
+        icon: <FiTrendingUp className="w-8 h-8" />,
+        title: 'Leaderboard & XP System',
+        description: 'Earn XP points for every action — coding, standups, challenges. Climb the ranked leaderboard.',
+        badge: '🆕 New',
+    },
+    {
+        icon: <span className="w-8 h-8 text-2xl flex items-center">📋</span>,
+        title: 'Daily Stand-up Bot',
+        description: 'Agile-style daily check-ins for your squad. Track blockers, share progress, build accountability.',
+        badge: '🆕 New',
+    },
+    {
+        icon: <span className="w-8 h-8 text-2xl flex items-center">🧪</span>,
+        title: 'Squad Skill Lab',
+        description: 'Post mini-challenges inside your squad. Members submit solutions, vote on the best, and earn XP.',
+        badge: '🆕 New',
+    },
+    {
+        icon: <span className="w-8 h-8 text-2xl flex items-center">📊</span>,
+        title: 'Student Portfolio Builder',
+        description: 'Get an auto-generated, shareable portfolio page showcasing your projects, badges, and skills.',
+        badge: '🆕 New',
+    },
+    {
+        icon: <FiMap className="w-8 h-8" />,
+        title: 'Squad Roadmap Builder',
+        description: 'Visual milestone timeline for your project. Plan, track, and celebrate progress like a real team.',
+        badge: '🆕 New',
     },
     {
         icon: <FiVideo className="w-8 h-8" />,
         title: 'Real-time Video Calls',
         description: 'Connect instantly with team members and mentors through high-quality video calls.',
+        badge: null,
     },
     {
         icon: <FiCalendar className="w-8 h-8" />,
         title: 'Mentor Booking',
         description: 'Book sessions with experienced mentors who can guide your learning journey.',
+        badge: null,
+    },
+    {
+        icon: <FiMic className="w-8 h-8" />,
+        title: 'Voice Notes in Chat',
+        description: 'Record and send 60-second voice messages in squad chat for faster async communication.',
+        badge: '🆕 New',
     },
     {
         icon: <FiMessageSquare className="w-8 h-8" />,
         title: 'Team Chat',
-        description: 'Communicate seamlessly with your squad through integrated chat rooms.',
+        description: 'Communicate seamlessly with your squad through integrated chat rooms with reactions and threads.',
+        badge: null,
     },
     {
         icon: <FiGitMerge className="w-8 h-8" />,
         title: 'GitHub Integration',
         description: 'Sync your projects with GitHub repositories for efficient collaboration.',
+        badge: null,
     },
     {
-        icon: <FiStar className="w-8 h-8" />,
+        icon: <FiZap className="w-8 h-8" />,
         title: 'Skill Development',
-        description: 'Enhance your skills through practical projects and mentor guidance.',
+        description: 'Enhance your skills through practical projects, mentor guidance, and squad challenges.',
+        badge: null,
     },
 ];
 
@@ -121,10 +163,10 @@ export default function LandingPage() {
                         className="text-center mb-16"
                     >
                         <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                            Everything You Need to Succeed
+                            12 Features Built for Students
                         </h2>
                         <p className="text-xl text-gray-600 dark:text-gray-300">
-                            A complete platform for collaborative learning and mentorship
+                            From AI squad matching to daily standups — a complete student collaboration OS
                         </p>
                     </motion.div>
 
@@ -134,10 +176,15 @@ export default function LandingPage() {
                                 key={index}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
+                                transition={{ duration: 0.5, delay: (index % 6) * 0.1 }}
                                 whileHover={{ y: -5 }}
-                                className="glassmorphism p-8 rounded-2xl"
+                                className="glassmorphism p-8 rounded-2xl relative overflow-hidden"
                             >
+                                {feature.badge && (
+                                    <span className="absolute top-4 right-4 text-xs font-bold bg-violet-500/20 text-violet-600 dark:text-violet-400 border border-violet-500/30 px-2 py-0.5 rounded-full">
+                                        {feature.badge}
+                                    </span>
+                                )}
                                 <div className="text-primary-600 dark:text-primary-400 mb-4">
                                     {feature.icon}
                                 </div>
