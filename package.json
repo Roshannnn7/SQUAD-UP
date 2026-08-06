@@ -1,0 +1,19 @@
+{
+  "name": "squadup",
+  "version": "1.0.0",
+  "description": "SquadUp - Collaborative Learning Platform",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix Backend\" \"npm run dev --prefix Frontend\"",
+    "backend": "npm run dev --prefix Backend",
+    "frontend": "npm run dev --prefix Frontend",
+    "install-all": "npm install && npm install --prefix Backend && npm install --prefix Frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "mongodb": "^7.0.0",
+    "next-themes": "^0.4.6"
+  }
+}
