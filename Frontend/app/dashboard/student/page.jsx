@@ -57,7 +57,7 @@ export default function StudentDashboard() {
         { label: 'Active Squads', value: projects.length.toString(), icon: <FiTrendingUp />, color: 'text-blue-600', bg: 'bg-blue-100', href: '/squads' },
         { label: 'Upcoming Sessions', value: bookings.length.toString(), icon: <FiClock />, color: 'text-purple-600', bg: 'bg-purple-100', href: '/bookings' },
         { label: 'XP Points', value: (user?.points || 0).toLocaleString(), icon: <FiZap />, color: 'text-violet-600', bg: 'bg-violet-100', href: '/leaderboard' },
-        { label: 'Day Streak', value: `${user?.streak?.current || 0}🔥`, icon: <FiAward />, color: 'text-orange-600', bg: 'bg-orange-100', href: '/leaderboard' },
+        { label: 'Day Streak', value: `${user?.streak?.current || 0} Days`, icon: <FiAward />, color: 'text-orange-600', bg: 'bg-orange-100', href: '/leaderboard' },
     ];
 
     return (
@@ -72,7 +72,7 @@ export default function StudentDashboard() {
                         animate={{ opacity: 1, x: 0 }}
                     >
                         <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-                            Welcome, {user?.fullName?.split(' ')[0]} 👋
+                            Welcome back, {user?.fullName?.split(' ')[0]}
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-2">
                             System status: Optimal. You have {bookings.length} sessions scheduled this week.

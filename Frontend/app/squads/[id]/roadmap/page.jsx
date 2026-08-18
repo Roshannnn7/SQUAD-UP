@@ -271,7 +271,9 @@ export default function RoadmapPage({ params }) {
                     </div>
                 ) : milestones.length === 0 ? (
                     <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl">
-                        <p className="text-5xl mb-4">🗺️</p>
+                        <div className="w-16 h-16 bg-violet-500/10 text-violet-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <FiMap className="w-8 h-8" />
+                        </div>
                         <p className="text-xl font-bold text-white mb-2">No milestones yet</p>
                         <p className="text-gray-400 mb-6">Plan your project journey with milestones</p>
                         <button

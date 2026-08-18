@@ -10,10 +10,10 @@ import { FiArrowLeft, FiSend, FiCalendar, FiCheckCircle, FiAlertCircle, FiUsers,
 import { BsFire } from 'react-icons/bs';
 
 const MOOD_OPTIONS = [
-    { value: 'great', emoji: '🚀', label: 'Great!' },
-    { value: 'good', emoji: '😊', label: 'Good' },
-    { value: 'okay', emoji: '😐', label: 'Okay' },
-    { value: 'struggling', emoji: '😰', label: 'Struggling' },
+    { value: 'great', label: 'High Energy' },
+    { value: 'good', label: 'Good Progress' },
+    { value: 'okay', label: 'Steady' },
+    { value: 'struggling', label: 'Needs Support' },
 ];
 
 const MOOD_COLORS = {
@@ -214,7 +214,7 @@ export default function StandupPage({ params }) {
                                                 <p className="text-xs text-gray-500">{new Date(standup.createdAt).toLocaleTimeString()}</p>
                                             </div>
                                             <span className={`text-xs px-3 py-1 rounded-full border font-semibold ${MOOD_COLORS[standup.mood]}`}>
-                                                {MOOD_OPTIONS.find(m => m.value === standup.mood)?.emoji} {standup.mood}
+                                                {MOOD_OPTIONS.find(m => m.value === standup.mood)?.label || standup.mood}
                                             </span>
                                         </div>
 
@@ -277,7 +277,7 @@ export default function StandupPage({ params }) {
                                 <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-3xl p-8 space-y-6">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                                            🌅 What did you accomplish yesterday?
+                                            What did you accomplish yesterday?
                                         </label>
                                         <textarea
                                             value={form.yesterday}
@@ -291,7 +291,7 @@ export default function StandupPage({ params }) {
 
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                                            🎯 What will you work on today?
+                                            What will you work on today?
                                         </label>
                                         <textarea
                                             value={form.today}
@@ -305,7 +305,7 @@ export default function StandupPage({ params }) {
 
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                                            🚧 Any blockers? (optional)
+                                            Any blockers? (optional)
                                         </label>
                                         <textarea
                                             value={form.blockers}
@@ -318,7 +318,7 @@ export default function StandupPage({ params }) {
 
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                                            😄 How are you feeling today?
+                                            Status & Energy Level
                                         </label>
                                         <div className="grid grid-cols-4 gap-3">
                                             {MOOD_OPTIONS.map((mood) => (

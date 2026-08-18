@@ -312,7 +312,9 @@ export default function ChallengesPage({ params }) {
                             <FiArrowLeft className="w-5 h-5" />
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-black text-white">Skill Lab 🧪</h1>
+                            <h1 className="text-3xl font-black text-white flex items-center gap-2">
+                                <FiZap className="text-emerald-400" /> Skill Lab
+                            </h1>
                             <p className="text-gray-400 text-sm mt-1">Challenge yourselves and earn XP</p>
                         </div>
                     </div>
@@ -332,7 +334,9 @@ export default function ChallengesPage({ params }) {
                     </div>
                 ) : challenges.length === 0 ? (
                     <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl">
-                        <p className="text-5xl mb-4">🧪</p>
+                        <div className="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <FiZap className="w-8 h-8" />
+                        </div>
                         <p className="text-xl font-bold text-white mb-2">No challenges yet!</p>
                         <p className="text-gray-400 mb-6">Create the first challenge to level up your squad.</p>
                         <button

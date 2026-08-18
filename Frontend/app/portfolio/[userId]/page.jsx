@@ -128,7 +128,7 @@ export default function PortfolioPage({ params }) {
                                 <h1 className="text-3xl font-black text-white">{user?.fullName}</h1>
                                 {/* Level badge */}
                                 <span className="bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold px-3 py-1 rounded-full">
-                                    ⚡ Lv.{user?.level || 1} · {getLevelTitle(user?.level || 1)}
+                                    Lv.{user?.level || 1} · {getLevelTitle(user?.level || 1)}
                                 </span>
                             </div>
                             <p className="text-gray-400 text-sm mb-3">{user?.headline || 'Student Developer'}</p>
@@ -278,7 +278,9 @@ export default function PortfolioPage({ params }) {
 
                             {projects.length === 0 ? (
                                 <div className="bg-white/5 border border-white/10 rounded-3xl p-10 text-center">
-                                    <p className="text-4xl mb-3">🚀</p>
+                                    <div className="w-12 h-12 bg-violet-500/10 text-violet-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                        <FiUsers className="w-6 h-6" />
+                                    </div>
                                     <p className="text-gray-400">No public projects yet.</p>
                                 </div>
                             ) : (

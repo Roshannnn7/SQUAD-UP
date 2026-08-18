@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import {
     FiPlus, FiCheckCircle, FiCircle, FiClock, FiUser, FiTrash2,
-    FiArrowLeft, FiEdit2, FiX, FiFlag, FiCalendar, FiMoreVertical, FiTag
+    FiArrowLeft, FiEdit2, FiX, FiFlag, FiCalendar, FiMoreVertical, FiTag, FiCheckSquare
 } from 'react-icons/fi';
 
 const PRIORITY_CONFIG = {
@@ -20,9 +20,9 @@ const PRIORITY_CONFIG = {
 };
 
 const COLUMNS = [
-    { status: 'todo',        label: 'To Do',       icon: '📋', color: 'border-t-gray-400' },
-    { status: 'in-progress', label: 'In Progress', icon: '⚡', color: 'border-t-blue-500' },
-    { status: 'done',        label: 'Done',        icon: '✅', color: 'border-t-green-500' },
+    { status: 'todo',        label: 'To Do',       color: 'border-t-gray-400' },
+    { status: 'in-progress', label: 'In Progress', color: 'border-t-blue-500' },
+    { status: 'done',        label: 'Done',        color: 'border-t-green-500' },
 ];
 
 function TaskCard({ task, onToggle, onDelete, onEdit, isAdmin }) {
@@ -192,7 +192,7 @@ function TaskModal({ task, members, projectId, onClose, onSaved }) {
             >
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-black text-gray-900 dark:text-white">
-                        {task ? 'Edit Task' : 'Create New Task'} 🎯
+                        {task ? 'Edit Task' : 'Create New Task'}
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl">
                         <FiX className="w-5 h-5" />
@@ -230,9 +230,9 @@ function TaskModal({ task, members, projectId, onClose, onSaved }) {
                                 onChange={e => setForm({ ...form, priority: e.target.value })}
                                 className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none"
                             >
-                                <option value="low">🟢 Low</option>
-                                <option value="medium">🟡 Medium</option>
-                                <option value="high">🔴 High</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
                             </select>
                         </div>
                         <div>
@@ -341,7 +341,7 @@ export default function ProjectTasksPage() {
         try {
             const res = await api.put(`/tasks/${taskId}`, { status: nextStatus });
             setTasks(prev => prev.map(t => t._id === taskId ? res.data : t));
-            if (nextStatus === 'done') toast.success('Task completed! 🎉 +10 XP');
+            if (nextStatus === 'done') toast.success('Task completed! +10 XP');
         } catch (err) {
             toast.error('Failed to update task');
         }
@@ -417,8 +417,8 @@ export default function ProjectTasksPage() {
                             <FiArrowLeft className="w-5 h-5" />
                         </button>
                         <div>
-                            <h1 className="text-3xl font-black text-gray-900 dark:text-white">
-                                Task Board 📋
+                            <h1 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                                <FiCheckSquare className="text-violet-500" /> Task Board
                             </h1>
                             <p className="text-gray-500 text-sm mt-0.5">
                                 {project?.name} · {stats.done}/{stats.total} done
@@ -469,7 +469,7 @@ export default function ProjectTasksPage() {
                     {[
                         { key: 'all', label: 'All Tasks' },
                         { key: 'mine', label: 'My Tasks' },
-                        { key: 'high', label: '🔴 High Priority' },
+                        { key: 'high', label: 'High Priority' },
                     ].map(f => (
                         <button
                             key={f.key}
@@ -506,7 +506,6 @@ export default function ProjectTasksPage() {
                                     {/* Column Header */}
                                     <div className={`bg-white dark:bg-gray-800 rounded-2xl p-4 mb-3 border-t-4 ${col.color} border border-gray-100 dark:border-gray-700 flex items-center justify-between`}>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-lg">{col.icon}</span>
                                             <span className="font-bold text-gray-900 dark:text-white text-sm">{col.label}</span>
                                         </div>
                                         <span className="text-xs font-black bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
@@ -557,7 +556,7 @@ export default function ProjectTasksPage() {
                 {members.length > 0 && !loading && tasks.length > 0 && (
                     <div className="mt-10 bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700">
                         <h2 className="font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2 text-sm uppercase tracking-widest">
-                            👥 Team Workload
+                            <FiUsers className="text-violet-500" /> Team Workload
                         </h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                             {members.map(member => {

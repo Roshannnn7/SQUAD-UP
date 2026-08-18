@@ -19,9 +19,9 @@ const PERIOD_OPTIONS = [
 ];
 
 const RANK_COLORS = {
-    1: { bg: 'from-yellow-400 to-amber-500', text: 'text-yellow-600', icon: '🥇', glow: 'shadow-yellow-500/40' },
-    2: { bg: 'from-slate-300 to-slate-400', text: 'text-slate-600', icon: '🥈', glow: 'shadow-slate-400/40' },
-    3: { bg: 'from-amber-600 to-orange-500', text: 'text-amber-700', icon: '🥉', glow: 'shadow-amber-500/40' },
+    1: { bg: 'from-yellow-400 to-amber-500', text: 'text-yellow-600', glow: 'shadow-yellow-500/40' },
+    2: { bg: 'from-slate-300 to-slate-400', text: 'text-slate-600', glow: 'shadow-slate-400/40' },
+    3: { bg: 'from-amber-600 to-orange-500', text: 'text-amber-700', glow: 'shadow-amber-500/40' },
 };
 
 const getLevelTitle = (level) => {
@@ -190,7 +190,7 @@ export default function LeaderboardPage() {
                                             alt={top3[1]?.fullName}
                                             className="w-16 h-16 rounded-2xl border-2 border-slate-400 shadow-xl"
                                         />
-                                        <div className="absolute -top-3 -right-3 text-2xl">🥈</div>
+                                        <div className="absolute -top-3 -right-3 w-7 h-7 bg-slate-400 text-gray-900 rounded-full font-bold flex items-center justify-center text-xs shadow-md">2</div>
                                     </div>
                                     <p className="text-sm font-bold text-white text-center max-w-[80px] truncate">{top3[1]?.fullName?.split(' ')[0]}</p>
                                     <p className="text-xs text-violet-400 font-semibold">{top3[1]?.points?.toLocaleString()} XP</p>
@@ -213,7 +213,7 @@ export default function LeaderboardPage() {
                                             alt={top3[0]?.fullName}
                                             className="w-24 h-24 rounded-2xl border-4 border-yellow-400 shadow-2xl shadow-yellow-500/40"
                                         />
-                                        <div className="absolute -top-2 -right-3 text-2xl">🥇</div>
+                                        <div className="absolute -top-4 -right-3 w-8 h-8 bg-amber-400 text-gray-900 rounded-full font-bold flex items-center justify-center text-sm shadow-lg shadow-amber-400/50">1</div>
                                     </div>
                                     <p className="text-base font-bold text-white text-center max-w-[100px] truncate">{top3[0]?.fullName?.split(' ')[0]}</p>
                                     <p className="text-sm text-yellow-400 font-bold">{top3[0]?.points?.toLocaleString()} XP</p>
@@ -235,7 +235,7 @@ export default function LeaderboardPage() {
                                             alt={top3[2]?.fullName}
                                             className="w-16 h-16 rounded-2xl border-2 border-amber-700 shadow-xl"
                                         />
-                                        <div className="absolute -top-3 -right-3 text-2xl">🥉</div>
+                                        <div className="absolute -top-3 -right-3 w-7 h-7 bg-amber-700 text-white rounded-full font-bold flex items-center justify-center text-xs shadow-md">3</div>
                                     </div>
                                     <p className="text-sm font-bold text-white text-center max-w-[80px] truncate">{top3[2]?.fullName?.split(' ')[0]}</p>
                                     <p className="text-xs text-amber-400 font-semibold">{top3[2]?.points?.toLocaleString()} XP</p>

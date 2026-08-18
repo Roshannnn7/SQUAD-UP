@@ -102,8 +102,8 @@ export default function SquadMatchCard() {
     };
 
     const CATEGORY_ICONS = {
-        web: '🌐', mobile: '📱', ai_ml: '🤖', blockchain: '⛓️',
-        game: '🎮', iot: '📡', other: '🚀',
+        web: FiZap, mobile: FiUsers, ai_ml: FiStar, blockchain: FiZap,
+        game: FiZap, iot: FiZap, other: FiZap,
     };
 
     return (
@@ -114,7 +114,7 @@ export default function SquadMatchCard() {
                         <FiZap className="w-4 h-4 text-violet-400" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-gray-900 dark:text-white text-sm">AI Squad Match</h3>
+                        <h3 className="font-bold text-gray-900 dark:text-white text-sm">Squad Match</h3>
                         <p className="text-[10px] text-gray-400">Based on your skills</p>
                     </div>
                 </div>
@@ -136,7 +136,7 @@ export default function SquadMatchCard() {
                 </div>
             ) : matches.length === 0 ? (
                 <div className="text-center py-6">
-                    <p className="text-3xl mb-2">🔍</p>
+                    <FiZap className="w-8 h-8 text-gray-500 mx-auto mb-2" />
                     <p className="text-gray-500 text-xs">No matches found. Add skills to your profile!</p>
                 </div>
             ) : (

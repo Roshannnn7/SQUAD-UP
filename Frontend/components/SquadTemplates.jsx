@@ -6,14 +6,16 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
+import { FiGlobe, FiSmartphone, FiCpu, FiLink, FiTv, FiZap, FiGrid } from 'react-icons/fi';
+
 const CATEGORY_ICONS = {
-    web: '🌐',
-    mobile: '📱',
-    ai_ml: '🤖',
-    blockchain: '⛓️',
-    game: '🎮',
-    iot: '💡',
-    other: '🚀',
+    web: FiGlobe,
+    mobile: FiSmartphone,
+    ai_ml: FiCpu,
+    blockchain: FiLink,
+    game: FiTv,
+    iot: FiZap,
+    other: FiGrid,
 };
 
 export default function SquadTemplates() {
@@ -88,7 +90,7 @@ export default function SquadTemplates() {
                 >
                     All Templates
                 </button>
-                {Object.entries(CATEGORY_ICONS).map(([category, icon]) => (
+                {Object.entries(CATEGORY_ICONS).map(([category, Icon]) => (
                     <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
@@ -97,7 +99,7 @@ export default function SquadTemplates() {
                                 : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'
                             }`}
                     >
-                        <span>{icon}</span>
+                        <Icon className="w-4 h-4" />
                         <span className="capitalize">{category.replace('_', '/')}</span>
                     </button>
                 ))}
@@ -105,23 +107,27 @@ export default function SquadTemplates() {
 
             {/* Templates Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredTemplates.map((template) => (
-                    <motion.div
-                        key={template._id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ y: -5 }}
-                        className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
-                    >
-                        {/* Icon and Badge */}
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="text-5xl">{template.icon || CATEGORY_ICONS[template.category]}</div>
-                            {template.isOfficial && (
-                                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
-                                    Official
-                                </span>
-                            )}
-                        </div>
+                {filteredTemplates.map((template) => {
+                    const CatIcon = CATEGORY_ICONS[template.category] || FiGrid;
+                    return (
+                        <motion.div
+                            key={template._id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ y: -5 }}
+                            className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
+                        >
+                            {/* Icon and Badge */}
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="w-12 h-12 rounded-2xl bg-violet-500/10 text-violet-500 flex items-center justify-center">
+                                    <CatIcon className="w-6 h-6" />
+                                </div>
+                                {template.isOfficial && (
+                                    <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
+                                        Official
+                                    </span>
+                                )}
+                            </div>
 
                         {/* Title and Description */}
                         <h3 className="text-xl font-bold mb-2">{template.name}</h3>
@@ -165,7 +171,7 @@ export default function SquadTemplates() {
                             Use This Template
                         </button>
                     </motion.div>
-                ))}
+                ); })}
             </div>
 
             {filteredTemplates.length === 0 && (

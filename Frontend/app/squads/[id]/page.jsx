@@ -350,7 +350,7 @@ export default function SquadDetailPage() {
                                 <div className="space-y-2">
                                     <Link href={`/squads/${id}/tasks`}
                                         className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
-                                        <span className="text-lg">🎯</span>
+                                        <FiList className="text-lg text-violet-500" />
                                         <div>
                                             <p className="text-sm font-bold">Task Board</p>
                                             <p className="text-xs text-gray-400">Assign & track tasks</p>
@@ -358,7 +358,7 @@ export default function SquadDetailPage() {
                                     </Link>
                                     <Link href={`/squads/${id}/standup`}
                                         className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
-                                        <span className="text-lg">📋</span>
+                                        <FiClock className="text-lg text-blue-500" />
                                         <div>
                                             <p className="text-sm font-bold">Daily Stand-up</p>
                                             <p className="text-xs text-gray-400">Post your check-in</p>
@@ -366,7 +366,7 @@ export default function SquadDetailPage() {
                                     </Link>
                                     <Link href={`/squads/${id}/challenges`}
                                         className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
-                                        <span className="text-lg">🧪</span>
+                                        <FiZap className="text-lg text-emerald-500" />
                                         <div>
                                             <p className="text-sm font-bold">Skill Lab</p>
                                             <p className="text-xs text-gray-400">Challenges & competitions</p>
@@ -374,7 +374,7 @@ export default function SquadDetailPage() {
                                     </Link>
                                     <Link href={`/squads/${id}/roadmap`}
                                         className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
-                                        <FiMap className="text-lg" />
+                                        <FiMap className="text-lg text-indigo-500" />
                                         <div>
                                             <p className="text-sm font-bold">Roadmap</p>
                                             <p className="text-xs text-gray-400">Milestones & planning</p>
@@ -382,7 +382,7 @@ export default function SquadDetailPage() {
                                     </Link>
                                     <Link href={`/squads/${id}/chat`}
                                         className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
-                                        <span className="text-lg">💬</span>
+                                        <FiMessageSquare className="text-lg text-purple-500" />
                                         <div>
                                             <p className="text-sm font-bold">Squad Chat</p>
                                             <p className="text-xs text-gray-400">Discuss & share files</p>
@@ -390,7 +390,7 @@ export default function SquadDetailPage() {
                                     </Link>
                                     <Link href={`/squads/${id}/resources`}
                                         className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
-                                        <span className="text-lg">📂</span>
+                                        <FiStar className="text-lg text-amber-500" />
                                         <div>
                                             <p className="text-sm font-bold">Resource Hub</p>
                                             <p className="text-xs text-gray-400">Links, APIs, Docs</p>
@@ -398,7 +398,7 @@ export default function SquadDetailPage() {
                                     </Link>
                                     <Link href={`/squads/${id}/mentors`}
                                         className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
-                                        <span className="text-lg">🤝</span>
+                                        <FiUsers className="text-lg text-rose-500" />
                                         <div>
                                             <p className="text-sm font-bold">Squad Mentors</p>
                                             <p className="text-xs text-gray-400">Invite expert guidance</p>
