@@ -1,8 +1,9 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const helmet = require('helmet');
-const http = require('http');
+const express      = require('express');
+const dotenv       = require('dotenv');
+const cors         = require('cors');
+const helmet       = require('helmet');
+const cookieParser = require('cookie-parser');
+const http         = require('http');
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +18,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const errorHandler = require('./middleware/error');
+const logger       = require('./utils/logger');
 
 const app = express();
 const server = http.createServer(app);
@@ -46,13 +48,12 @@ app.use(helmet({
     contentSecurityPolicy: false,
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
-});
+// Safe request logger — never logs request body
+app.use(logger.request);
 
 // Connect to MongoDB
 connectDB();
@@ -116,6 +117,10 @@ app.use(errorHandler);
 app.use('*', (req, res) => res.status(404).json({ message: 'Endpoint not found' }));
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    server.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

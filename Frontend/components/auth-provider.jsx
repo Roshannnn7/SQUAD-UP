@@ -36,8 +36,13 @@ export function AuthProvider({ children }) {
             });
 
             const newAccessToken = response.data.token;
+            const newRefreshToken = response.data.refreshToken;
             setToken(newAccessToken);
             localStorage.setItem('token', newAccessToken);
+            if (newRefreshToken) {
+                setRefreshToken(newRefreshToken);
+                localStorage.setItem('refreshToken', newRefreshToken);
+            }
             return true;
         } catch (error) {
             console.warn('Token refresh failed:', error.message);
@@ -97,8 +102,17 @@ export function AuthProvider({ children }) {
         storeLogin(userData, token, refreshToken);
     };
 
-    const logout = () => {
-        storeLogout();
+    const logout = async () => {
+        try {
+            const storedRefreshToken = localStorage.getItem('refreshToken');
+            if (storedRefreshToken) {
+                await api.post('/auth/logout', { refreshToken: storedRefreshToken });
+            }
+        } catch (err) {
+            console.warn('Server logout call failed:', err.message);
+        } finally {
+            storeLogout();
+        }
     };
 
     const updateProfile = (updates) => {
