@@ -6,14 +6,14 @@ import Navbar from '@/components/Navbar';
 import api from '@/lib/axios';
 import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
-import { FiArrowLeft, FiSend, FiCalendar, FiCheckCircle, FiAlertCircle, FiUsers, FiClock, FiSun } from 'react-icons/fi';
+import { FiArrowLeft, FiSend, FiCalendar, FiCheckCircle, FiAlertCircle, FiUsers, FiClock, FiSun, FiZap } from 'react-icons/fi';
 import { BsFire } from 'react-icons/bs';
 
 const MOOD_OPTIONS = [
-    { value: 'great', label: 'High Energy' },
-    { value: 'good', label: 'Good Progress' },
-    { value: 'okay', label: 'Steady' },
-    { value: 'struggling', label: 'Needs Support' },
+    { value: 'great', label: 'High Energy', icon: FiZap },
+    { value: 'good', label: 'Good Progress', icon: FiCheckCircle },
+    { value: 'okay', label: 'Steady', icon: FiClock },
+    { value: 'struggling', label: 'Needs Support', icon: FiAlertCircle },
 ];
 
 const MOOD_COLORS = {
@@ -113,6 +113,7 @@ export default function StandupPage({ params }) {
                         className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
                         <FiArrowLeft className="w-5 h-5" />
                     </Link>
+                    <div>
                         <h1 className="text-3xl font-black text-white flex items-center gap-2">
                             <span>Daily Stand-up</span>
                         </h1>
@@ -318,21 +319,24 @@ export default function StandupPage({ params }) {
                                             Status & Energy Level
                                         </label>
                                         <div className="grid grid-cols-4 gap-3">
-                                            {MOOD_OPTIONS.map((mood) => (
-                                                <button
-                                                    key={mood.value}
-                                                    type="button"
-                                                    onClick={() => setForm({ ...form, mood: mood.value })}
-                                                    className={`flex flex-col items-center gap-1 p-3 rounded-2xl border-2 transition-all ${
-                                                        form.mood === mood.value
-                                                            ? MOOD_COLORS[mood.value]
-                                                            : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
-                                                    }`}
-                                                >
-                                                    <span className="text-2xl">{mood.emoji}</span>
-                                                    <span className="text-xs font-semibold">{mood.label}</span>
-                                                </button>
-                                            ))}
+                                            {MOOD_OPTIONS.map((mood) => {
+                                                const IconComp = mood.icon;
+                                                return (
+                                                    <button
+                                                        key={mood.value}
+                                                        type="button"
+                                                        onClick={() => setForm({ ...form, mood: mood.value })}
+                                                        className={`flex flex-col items-center gap-1 p-3 rounded-2xl border-2 transition-all ${
+                                                            form.mood === mood.value
+                                                                ? MOOD_COLORS[mood.value]
+                                                                : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
+                                                        }`}
+                                                    >
+                                                        <IconComp className="w-4 h-4 mb-1" />
+                                                        <span className="text-xs font-semibold">{mood.label}</span>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
@@ -382,7 +386,7 @@ export default function StandupPage({ params }) {
                                                                 alt=""
                                                             />
                                                             <span className="text-xs font-semibold text-gray-300">{su.user?.fullName}</span>
-                                                            <span className="ml-auto text-xs">{MOOD_OPTIONS.find(m => m.value === su.mood)?.emoji}</span>
+                                                            <span className="ml-auto text-xs font-semibold text-gray-400">{MOOD_OPTIONS.find(m => m.value === su.mood)?.label}</span>
                                                         </div>
                                                         <p className="text-xs text-gray-400 line-clamp-2">{su.today}</p>
                                                     </div>
