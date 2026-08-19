@@ -6,20 +6,38 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import api from '@/lib/axios';
 import toast from 'react-hot-toast';
-import { 
-    FiBookOpen, 
-    FiBriefcase, 
-    FiCode, 
-    FiAward, 
-    FiGlobe, 
-    FiGithub, 
-    FiLinkedin, 
-    FiCheck, 
-    FiArrowRight, 
+import {
+    FiBookOpen,
+    FiBriefcase,
+    FiCode,
+    FiAward,
+    FiGlobe,
+    FiGithub,
+    FiLinkedin,
+    FiCheck,
+    FiArrowRight,
     FiArrowLeft,
     FiUser,
-    FiCheckCircle
+    FiCheckCircle,
+    FiCamera,
+    FiUpload
 } from 'react-icons/fi';
+
+// Curated avatar set — consistent, gender-neutral, professional
+const CURATED_AVATARS = [
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=alpha&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=beta&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=gamma&backgroundColor=d1f4d0',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=delta&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=epsilon&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=zeta&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=eta&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=theta&backgroundColor=d1f4d0',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=iota&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=kappa&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=lambda&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=mu&backgroundColor=c0aede',
+];
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -29,6 +47,7 @@ export default function OnboardingPage() {
     // Wizard Step State: 1 = Role, 2 = Background, 3 = Skills & Social
     const [step, setStep] = useState(1);
     const [onboardingRole, setOnboardingRole] = useState(user?.role || 'student');
+    const [selectedAvatar, setSelectedAvatar] = useState('');
 
     // Student Form State
     const [studentForm, setStudentForm] = useState({
@@ -71,15 +90,18 @@ export default function OnboardingPage() {
 
         try {
             const payload = {
-                college: studentForm.college,
-                degree: studentForm.degree,
-                year: studentForm.graduationYear,
-                semester: '1',
-                skills: studentForm.skills,
-                interests: studentForm.interests,
-                githubProfile: studentForm.githubUrl,
+                college:         studentForm.college,
+                degree:          studentForm.degree,
+                year:            studentForm.graduationYear,
+                semester:        '1',
+                skills:          studentForm.skills,
+                interests:       studentForm.interests,
+                githubProfile:   studentForm.githubUrl,
                 linkedinProfile: studentForm.linkedinUrl,
-                bio: studentForm.bio,
+                bio:             studentForm.bio,
+                // Avatar: send whichever the user chose (upload takes precedence)
+                profilePhoto:    selectedAvatar || '',
+                avatarUrl:       selectedAvatar || '',
             };
 
             await api.put('/auth/complete-student-profile', payload);
@@ -369,6 +391,38 @@ export default function OnboardingPage() {
                                                     className="w-full p-4 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:outline-none"
                                                     placeholder="Tell teammates about your coding interests and project goals..."
                                                 />
+                                            </div>
+
+                                            {/* Avatar Selection */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                                                    Choose Your Avatar
+                                                </label>
+                                                <div className="grid grid-cols-6 gap-2 mb-3">
+                                                    {CURATED_AVATARS.map((url, i) => (
+                                                        <button
+                                                            key={i}
+                                                            type="button"
+                                                            onClick={() => setSelectedAvatar(url)}
+                                                            className={`relative rounded-xl overflow-hidden border-2 transition-all ${
+                                                                selectedAvatar === url
+                                                                    ? 'border-violet-600 shadow-md shadow-violet-500/30 scale-105'
+                                                                    : 'border-slate-200 dark:border-gray-700 hover:border-violet-400'
+                                                            }`}
+                                                            aria-label={`Avatar option ${i + 1}`}
+                                                        >
+                                                            <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full object-cover" />
+                                                            {selectedAvatar === url && (
+                                                                <div className="absolute inset-0 bg-violet-600/20 flex items-center justify-center">
+                                                                    <FiCheck className="text-violet-600 w-4 h-4 drop-shadow" />
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500">
+                                                    You can upload a custom photo from your profile settings after setup.
+                                                </p>
                                             </div>
                                         </>
                                     ) : (

@@ -3,6 +3,7 @@ const rateLimit  = require('express-rate-limit');
 const router     = express.Router();
 
 const {
+    registerManual,
     verifyFirebaseToken,
     loginLocal,
     refreshAccessToken,
@@ -54,8 +55,9 @@ const forgotPasswordLimiter = rateLimit({
 // ─────────────────────────────────────────────
 // Public routes (rate limited)
 // ─────────────────────────────────────────────
-router.post('/verify',         strictAuthLimiter,      verifyFirebaseToken);
-router.post('/login',          strictAuthLimiter,      loginLocal);
+router.post('/register',        strictAuthLimiter,      registerManual);
+router.post('/verify',          strictAuthLimiter,      verifyFirebaseToken);
+router.post('/login',           strictAuthLimiter,      loginLocal);
 router.post('/refresh',        refreshLimiter,         refreshAccessToken);
 router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);
 router.post('/reset-password',  strictAuthLimiter,     resetPassword);
