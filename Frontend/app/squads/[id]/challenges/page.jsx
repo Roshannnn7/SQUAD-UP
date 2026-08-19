@@ -18,7 +18,7 @@ const DIFFICULTY_STYLES = {
 };
 
 const TYPE_ICONS = {
-    coding: '💻', design: '🎨', research: '🔬', presentation: '📊', other: '🌟'
+    coding: 'Code', design: 'Design', research: 'Research', presentation: 'Presentation', other: 'General'
 };
 
 const STATUS_STYLES = {
@@ -68,7 +68,7 @@ function CreateChallengeModal({ projectId, onClose, onCreated }) {
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-black text-white">Create Challenge 🧪</h2>
+                    <h2 className="text-xl font-black text-white">Create Challenge</h2>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
                         <FiX />
                     </button>
@@ -96,11 +96,11 @@ function CreateChallengeModal({ projectId, onClose, onCreated }) {
                             onChange={(e) => setForm({ ...form, type: e.target.value })}
                             className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none"
                         >
-                            <option value="coding">💻 Coding</option>
-                            <option value="design">🎨 Design</option>
-                            <option value="research">🔬 Research</option>
-                            <option value="presentation">📊 Presentation</option>
-                            <option value="other">🌟 Other</option>
+                            <option value="coding">Coding</option>
+                            <option value="design">Design</option>
+                            <option value="research">Research</option>
+                            <option value="presentation">Presentation</option>
+                            <option value="other">Other</option>
                         </select>
                         <select
                             value={form.difficulty}
@@ -186,7 +186,7 @@ function SubmitModal({ challengeId, onClose, onSubmitted }) {
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-black text-white">Submit Solution 🚀</h2>
+                    <h2 className="text-xl font-black text-white">Submit Solution</h2>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl">
                         <FiX />
                     </button>
@@ -413,7 +413,7 @@ export default function ChallengesPage({ params }) {
                                     {/* Winner */}
                                     {ch.status === 'completed' && ch.winner && (
                                         <div className="mt-4 flex items-center gap-3 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-3">
-                                            <span className="text-xl">🏆</span>
+                                            <FiAward className="w-5 h-5 text-amber-400" />
                                             <span className="text-yellow-400 font-bold text-sm">Winner: {ch.winner?.fullName}</span>
                                         </div>
                                     )}
@@ -468,7 +468,7 @@ export default function ChallengesPage({ params }) {
                                                                     <FiThumbsUp className="w-3 h-3" />
                                                                     {sub.votes?.length || 0}
                                                                 </button>
-                                                                {sub.isWinner && <span className="text-xl">🏆</span>}
+                                                                {sub.isWinner && <FiAward className="w-5 h-5 text-amber-400" />}
                                                             </div>
                                                         ))}
                                                     </div>

@@ -261,7 +261,7 @@ export default function ProjectChatPage() {
             await addDoc(
                 collection(db, "squads", id, "messages"),
                 {
-                    text: `📎 Attached file: ${file.name}`,
+                    text: `Attached file: ${file.name}`,
                     fileUrl: downloadURL,
                     fileName: file.name,
                     fileType: file.type,

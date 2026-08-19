@@ -64,8 +64,8 @@ function MilestoneModal({ projectId, milestone, onClose, onSave }) {
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-black text-white">
-                        {milestone ? 'Edit Milestone' : 'Add Milestone'} 🗺️
+                    <h2 className="text-1xl font-black text-white">
+                        {milestone ? 'Edit Milestone' : 'Add Milestone'}
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl"><FiX /></button>
                 </div>
@@ -211,7 +211,7 @@ export default function RoadmapPage({ params }) {
                             <FiArrowLeft className="w-5 h-5" />
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-black text-white">Squad Roadmap 🗺️</h1>
+                            <h1 className="text-3xl font-black text-white">Squad Roadmap</h1>
                             <p className="text-gray-400 text-sm mt-1">Visual milestone timeline for your project</p>
                         </div>
                     </div>

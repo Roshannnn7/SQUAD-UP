@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FiPlus } from 'react-icons/fi';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -81,7 +82,7 @@ export default function MessageReactions({ messageId, currentUserId }) {
                     onClick={() => setShowPicker(!showPicker)}
                     className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 transition-colors"
                 >
-                    <span className="text-sm">➕</span>
+                    <FiPlus className="w-3.5 h-3.5" />
                 </motion.button>
 
                 {/* Emoji Picker */}

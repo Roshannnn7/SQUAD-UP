@@ -176,10 +176,12 @@ export default function StudentDashboard() {
                             href="/leaderboard"
                             className="block relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-6 rounded-[32px] text-white shadow-2xl group hover:-translate-y-1 transition-all"
                         >
-                            <div className="absolute top-0 right-0 text-[80px] opacity-10 group-hover:opacity-20 transition-opacity leading-none">🏆</div>
+                            <div className="absolute top-2 right-4 text-white/10 group-hover:text-white/20 transition-colors">
+                                <FiAward className="w-20 h-20" />
+                            </div>
                             <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-1">Your Rank</p>
                             <p className="text-4xl font-black mb-1">{(user?.points || 0).toLocaleString()} <span className="text-lg font-bold text-white/60">XP</span></p>
-                            <p className="text-white/70 text-sm mb-5">Lv.{user?.level || 1} · {user?.streak?.current || 0} day streak 🔥</p>
+                            <p className="text-white/70 text-sm mb-5">Lv.{user?.level || 1} · {user?.streak?.current || 0} day streak</p>
                             <div className="flex items-center gap-2 text-sm font-bold">
                                 <span>View Leaderboard</span>
                                 <FiArrowRight className="group-hover:translate-x-1 transition-transform" />

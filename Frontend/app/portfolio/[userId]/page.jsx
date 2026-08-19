@@ -7,7 +7,7 @@ import api from '@/lib/axios';
 import Link from 'next/link';
 import {
     FiGithub, FiLinkedin, FiGlobe, FiTwitter, FiMapPin,
-    FiStar, FiUsers, FiAward, FiZap, FiExternalLink, FiShare2
+    FiStar, FiUsers, FiAward, FiZap, FiExternalLink, FiShare2, FiBookOpen
 } from 'react-icons/fi';
 import { BsFire } from 'react-icons/bs';
 
@@ -236,7 +236,9 @@ export default function PortfolioPage({ params }) {
                                     {user.badges.map((badge, i) => (
                                         <div key={i} title={badge.name}
                                             className="bg-white/5 rounded-2xl p-3 text-center group hover:scale-110 transition-transform cursor-default">
-                                            <div className="text-2xl mb-1">{badge.icon || '🏅'}</div>
+                                            <div className="flex items-center justify-center text-amber-400 mb-1">
+                                                <FiAward className="w-6 h-6" />
+                                            </div>
                                             <p className="text-[10px] text-gray-400 truncate">{badge.name}</p>
                                         </div>
                                     ))}
@@ -254,7 +256,9 @@ export default function PortfolioPage({ params }) {
                             >
                                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Education</h3>
                                 <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-xl flex-shrink-0">🎓</div>
+                                    <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0">
+                                        <FiBookOpen className="w-5 h-5" />
+                                    </div>
                                     <div>
                                         <p className="text-white font-semibold text-sm">{studentProfile.institution}</p>
                                         <p className="text-gray-400 text-xs">{studentProfile.course || studentProfile.fieldOfStudy}</p>

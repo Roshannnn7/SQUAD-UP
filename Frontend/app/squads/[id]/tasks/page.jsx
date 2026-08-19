@@ -166,7 +166,7 @@ function TaskModal({ task, members, projectId, onClose, onSaved }) {
                 res = await api.post('/tasks', payload);
             }
             onSaved(res.data, !!task);
-            toast.success(task ? 'Task updated!' : 'Task created! 🎯');
+            toast.success(task ? 'Task updated successfully!' : 'Task created successfully!');
             onClose();
         } catch (err) {
             toast.error('Failed to save task');
@@ -296,7 +296,7 @@ function TaskModal({ task, members, projectId, onClose, onSaved }) {
                         disabled={saving}
                         className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-2xl transition-all disabled:opacity-50 shadow-lg shadow-violet-600/20"
                     >
-                        {saving ? 'Saving...' : task ? 'Update Task' : 'Create Task 🚀'}
+                        {saving ? 'Saving...' : task ? 'Update Task' : 'Create Task'}
                     </button>
                 </form>
             </motion.div>

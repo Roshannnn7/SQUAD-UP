@@ -8,7 +8,8 @@ import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
 import {
     FiTrendingUp, FiAward, FiZap, FiStar, FiTarget,
-    FiUser, FiChevronUp, FiChevronDown, FiMinus
+    FiUser, FiChevronUp, FiChevronDown, FiMinus,
+    FiCalendar, FiCheckSquare, FiCode, FiUsers, FiCheckCircle, FiFileText
 } from 'react-icons/fi';
 import { BsFire } from 'react-icons/bs';
 
@@ -207,7 +208,9 @@ export default function LeaderboardPage() {
                                     className="flex flex-col items-center"
                                 >
                                     <div className="relative mb-3">
-                                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl">👑</div>
+                                        <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 p-1.5 rounded-full shadow-lg">
+                                            <FiAward className="w-5 h-5" />
+                                        </div>
                                         <img
                                             src={top3[0]?.profilePhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${top3[0]?.fullName}`}
                                             alt={top3[0]?.fullName}
@@ -348,21 +351,26 @@ export default function LeaderboardPage() {
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {[
-                                    { action: 'Daily Login', xp: '+5 XP', icon: '📅' },
-                                    { action: 'Daily Standup', xp: '+10 XP', icon: '📋' },
-                                    { action: 'Challenge Submit', xp: '+20 XP', icon: '🧪' },
-                                    { action: 'Win a Challenge', xp: '+50-100 XP', icon: '🏆' },
-                                    { action: 'Join a Squad', xp: '+15 XP', icon: '👥' },
-                                    { action: 'Complete a Task', xp: '+10 XP', icon: '✅' },
-                                    { action: 'Post on Feed', xp: '+5 XP', icon: '📝' },
-                                    { action: 'Book a Mentor', xp: '+25 XP', icon: '🎯' },
-                                ].map((item) => (
-                                    <div key={item.action} className="bg-white/5 rounded-2xl p-4 text-center">
-                                        <div className="text-2xl mb-2">{item.icon}</div>
-                                        <p className="text-xs text-gray-400 font-medium">{item.action}</p>
-                                        <p className="text-sm font-black text-violet-400 mt-1">{item.xp}</p>
-                                    </div>
-                                ))}
+                                    { action: 'Daily Login', xp: '+5 XP', icon: FiCalendar },
+                                    { action: 'Daily Standup', xp: '+10 XP', icon: FiCheckSquare },
+                                    { action: 'Challenge Submit', xp: '+20 XP', icon: FiCode },
+                                    { action: 'Win a Challenge', xp: '+50-100 XP', icon: FiAward },
+                                    { action: 'Join a Squad', xp: '+15 XP', icon: FiUsers },
+                                    { action: 'Complete a Task', xp: '+10 XP', icon: FiCheckCircle },
+                                    { action: 'Post on Feed', xp: '+5 XP', icon: FiFileText },
+                                    { action: 'Book a Mentor', xp: '+25 XP', icon: FiTarget },
+                                ].map((item) => {
+                                    const IconComp = item.icon;
+                                    return (
+                                        <div key={item.action} className="bg-white/5 rounded-2xl p-4 text-center flex flex-col items-center">
+                                            <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-400 mb-2">
+                                                <IconComp className="w-5 h-5" />
+                                            </div>
+                                            <p className="text-xs text-gray-400 font-medium">{item.action}</p>
+                                            <p className="text-sm font-black text-violet-400 mt-1">{item.xp}</p>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </motion.div>
                     </>

@@ -1,48 +1,71 @@
-# Squad-Up — UI & Design System Style Guide
+# SquadUp — Humanized UI & Design System Style Guide
 
-This document defines the professional UI/UX standards, typography, copy guidelines, and component conventions for the Squad-Up platform.
-
----
-
-## 🎯 Design Principles
-
-1. **Clarity & Focus**: Minimal cognitive load. Microcopy is direct, professional, and action-oriented.
-2. **Professional Aesthetics**: No informal emojis in headers, cards, or navigation labels. Use SVG icon libraries (`react-icons/fi`, `react-icons/hi2`, `react-icons/bs`).
-3. **Subtle Motion**: Use Framer Motion strictly for functional feedback (page transitions, subtle fades, modal mounts). Avoid excessive or distracting animations.
-4. **Accessible Contrast (WCAG 2.1 AA)**: All text must meet minimum contrast ratios against backgrounds in both light and dark mode.
-5. **Keyboard & Screen Reader First**: Interactive elements must include proper `aria-label` attributes and focus rings.
+This document outlines the design philosophy, iconography standards, component conventions, animation patterns, and accessibility requirements for the SquadUp platform.
 
 ---
 
-## 🎨 Color Palette & Tokens
+## 🎯 Humanized Design Principles
 
-- **Primary Accent**: Violet / Indigo (`bg-violet-600`, `text-violet-500`, `border-violet-500/30`)
-- **Success / Positive**: Emerald / Green (`bg-emerald-500/10`, `text-emerald-400`)
-- **Warning / Medium**: Amber / Yellow (`bg-amber-500/10`, `text-amber-400`)
-- **Danger / High Priority**: Red (`bg-red-500/10`, `text-red-400`)
-- **Neutral Backgrounds**: Dark (`bg-gray-950`, `bg-gray-900`), Light (`bg-gray-50`, `bg-white`)
-
----
-
-## 🔤 Typography & Copy Conventions
-
-### Microcopy Guidelines
-
-| Bad (Informal / Emoji) | Good (Professional Label) |
-|------------------------|----------------------------|
-| `👥 Create Squad` | `Create Squad` (with `FiUsers` icon) |
-| `💬 Open Chat` | `Open Chat` (with `FiMessageSquare` icon) |
-| `🎯 Task Board` | `Task Board` (with `FiCheckSquare` icon) |
-| `📋 Daily Stand-up` | `Daily Stand-up` (with `FiClipboard` icon) |
-| `🧪 Skill Lab` | `Skill Lab` (with `FiCode` icon) |
-| `🥇 Rank 1` | `Rank 1` (with `FiAward` gold badge) |
-| `🚀 Great!` | `High Energy` (with `FiTrendingUp` icon) |
+1. **Human-Centered Aesthetic**: Interfaces should feel warm, intentional, and human-crafted — avoiding generic AI templates, stock placeholders, and robotic visual noise.
+2. **Professional Iconography & Typography**: Emojis are strictly removed from UI titles, navigation labels, form selects, badges, and system toasts. All visual indicators rely on vector SVG icon sets (`react-icons/fi`, `react-icons/hi2`, `react-icons/bs`).
+3. **Subtle Functional Motion**: Motion designed with Framer Motion enhances usability through purposeful feedback (subtle page fade-ins, smooth tab transitions, and micro-hover states). Avoid flashy, jarring, or unnecessary loop animations.
+4. **Guided Multi-Step Flows**: Complex interactions (such as onboarding) are broken down into logical, multi-step wizards with visual progress indicators, clear role selection cards, and guided step controls.
+5. **Accessible by Default (WCAG 2.1 AA)**: High-contrast color scales, keyboard focus rings (`focus:ring-2 focus:ring-violet-500`), explicit `<label>` bindings, and screen-reader `aria-label` attributes across all interactive components.
 
 ---
 
-## 🛡️ Accessibility Checklist
+## 🎨 Color Tokens & Design System Scale
 
-- [ ] All icon-only buttons include `aria-label="..."` or screen-reader text `<span className="sr-only">...</span>`.
-- [ ] Inputs have associated `<label>` elements or `aria-label`.
-- [ ] Color is never the sole indicator of state; always pair with text or an icon.
-- [ ] Modal dialogues trapped focus and include keyboard `Esc` dismiss handlers.
+### Color Palette
+- **Primary Accent**: Violet / Indigo (`violet-600` `#7c3aed`, `indigo-600` `#4f46e5`)
+- **Secondary Accent**: Cyan / Sky (`cyan-500` `#06b6d4`, `sky-500` `#0ea5e9`)
+- **Success / Positive**: Emerald (`emerald-600` `#059669`, `emerald-500/10` background)
+- **Warning / Alert**: Amber / Gold (`amber-500` `#f59e0b`, `amber-400` `#fbbf24`)
+- **Danger / High Priority**: Rose / Red (`rose-500` `#f43f5e`, `red-500/10` background)
+- **Backgrounds**: Light (`slate-50` `#f8fafc`, `white` `#ffffff`), Dark (`gray-950` `#030712`, `gray-900` `#111827`)
+
+### Typography Scale
+- **Display Headings**: `text-4xl` to `text-7xl`, `font-extrabold`, tracking `tight`, tracking `-0.02em`
+- **Section Titles**: `text-2xl` to `text-3xl`, `font-bold`
+- **Card Subheadings**: `text-lg` to `text-xl`, `font-bold`
+- **Body Text**: `text-base` / `text-sm`, `text-slate-600` (Light) / `text-slate-300` (Dark), `leading-relaxed`
+- **Badges & Microcopy**: `text-xs`, `font-semibold` / `font-bold`, uppercase tracking `wider`
+
+---
+
+## 🔤 Iconography & Microcopy Replacement Map
+
+| Informal / Emoji Pattern | Humanized Standard Label | Recommended SVG Icon (`react-icons`) |
+|--------------------------|--------------------------|-------------------------------------|
+| `🎓 Student` | `Student` | `FiBookOpen` / `FiUser` |
+| `👨‍🏫 Mentor` | `Mentor` | `FiBriefcase` / `FiAward` |
+| `👥 Create Squad` | `Create Squad` | `FiUsers` / `FiPlus` |
+| `💬 Open Chat` | `Open Chat` | `FiMessageSquare` |
+| `🎯 Task Board` | `Task Board` | `FiCheckSquare` |
+| `📋 Daily Stand-up` | `Daily Stand-up` | `FiCalendar` / `FiClipboard` |
+| `🧪 Skill Lab` | `Skill Lab` | `FiCode` / `FiZap` |
+| `🏆 Winner / Leaderboard` | `Winner / Leaderboard` | `FiAward` |
+| `🗺️ Squad Roadmap` | `Squad Roadmap` | `FiMap` |
+| `☀️ No Check-ins` | `No Check-ins` | `FiSun` |
+| `➕ Add` | `Add` | `FiPlus` |
+| `🚀 Task Created` | `Task Created` | `FiCheckCircle` |
+
+---
+
+## 🚀 Onboarding Flow Standards
+
+- **Step 1: Role Selection**: Interactive role selection cards for Students and Mentors with distinct icons, descriptions, keyboard selection (`Enter` / `Space`), and active state outlines.
+- **Step 2: Background Information**: Step-specific form inputs for academic institution (students) or current company and experience (mentors).
+- **Step 3: Skills & Social Links**: Skills tags, portfolio links, and bio summary with real-time validation.
+- **Navigation**: Progress step bar at top + explicit "Back" and "Next / Complete" guided buttons.
+
+---
+
+## 🛡️ WCAG 2.1 AA Accessibility Checklist
+
+- [x] All icon-only buttons include descriptive `aria-label="..."` or `<span className="sr-only">...</span>` text.
+- [x] Form inputs have corresponding `<label htmlFor="...">` elements or `aria-label`.
+- [x] All interactive controls include visible focus rings (`focus:ring-2 focus:ring-violet-500 focus:outline-none`).
+- [x] Minimum touch target height of 44px on mobile navigation links and form buttons.
+- [x] State transitions (loading, selected roles, active tabs) are announced via text, aria attributes, or clear SVG indicators.
+

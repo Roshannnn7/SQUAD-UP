@@ -154,7 +154,10 @@ export default function SquadMatchCard() {
                             >
                                 {/* Category Icon */}
                                 <div className="w-10 h-10 bg-violet-500/10 dark:bg-violet-900/30 rounded-xl flex items-center justify-center flex-shrink-0 text-lg group-hover:scale-110 transition-transform">
-                                    {CATEGORY_ICONS[squad.category] || '🚀'}
+                                    {(() => {
+                                        const IconComp = CATEGORY_ICONS[squad.category] || FiZap;
+                                        return <IconComp className="w-5 h-5 text-violet-500 dark:text-violet-400" />;
+                                    })()}
                                 </div>
 
                                 {/* Info */}

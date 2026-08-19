@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar';
 import api from '@/lib/axios';
 import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
-import { FiArrowLeft, FiSend, FiCalendar, FiCheckCircle, FiAlertCircle, FiUsers, FiClock } from 'react-icons/fi';
+import { FiArrowLeft, FiSend, FiCalendar, FiCheckCircle, FiAlertCircle, FiUsers, FiClock, FiSun } from 'react-icons/fi';
 import { BsFire } from 'react-icons/bs';
 
 const MOOD_OPTIONS = [
@@ -113,8 +113,9 @@ export default function StandupPage({ params }) {
                         className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
                         <FiArrowLeft className="w-5 h-5" />
                     </Link>
-                    <div>
-                        <h1 className="text-3xl font-black text-white">Daily Stand-up 📋</h1>
+                        <h1 className="text-3xl font-black text-white flex items-center gap-2">
+                            <span>Daily Stand-up</span>
+                        </h1>
                         <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">
                             <FiCalendar className="w-3 h-3" /> {today}
                         </p>
@@ -184,7 +185,7 @@ export default function StandupPage({ params }) {
                                 ))
                             ) : todayData?.standUps?.length === 0 ? (
                                 <div className="bg-white/5 border border-white/10 rounded-3xl p-12 text-center">
-                                    <p className="text-4xl mb-4">☀️</p>
+                                    <FiSun className="w-12 h-12 text-amber-400 mx-auto mb-4" />
                                     <p className="text-white font-bold text-xl mb-2">No check-ins yet today</p>
                                     <p className="text-gray-400 mb-6">Be the first to post your daily stand-up!</p>
                                     <button
@@ -265,13 +266,9 @@ export default function StandupPage({ params }) {
                         >
                             {success ? (
                                 <div className="text-center py-16">
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        className="text-6xl mb-4"
-                                    >🎉</motion.div>
+                                    <FiCheckCircle className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
                                     <p className="text-2xl font-black text-white mb-2">Check-in Posted!</p>
-                                    <p className="text-gray-400">+10 XP earned · Streak extended 🔥</p>
+                                    <p className="text-gray-400">+10 XP earned · Streak extended</p>
                                 </div>
                             ) : (
                                 <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-3xl p-8 space-y-6">

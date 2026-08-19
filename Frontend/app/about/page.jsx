@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
-import { FiInstagram, FiLinkedin, FiGithub, FiExternalLink, FiCode, FiUser, FiCpu } from 'react-icons/fi';
+import { FiInstagram, FiLinkedin, FiGithub, FiExternalLink, FiCode, FiUser, FiCpu, FiZap } from 'react-icons/fi';
 import Image from 'next/image';
 
 const containerVariants = {
@@ -137,7 +137,10 @@ export default function AboutPage() {
                                             I’m especially interested in community-driven platforms, automation, and innovative
                                             web solutions that empower users.
                                         </p>
-                                        <p className="font-bold gradient-text">🚀 Always learning. Always building.</p>
+                                         <p className="font-bold gradient-text flex items-center justify-center md:justify-start gap-2">
+                                             <FiZap className="text-violet-500" />
+                                             <span>Always learning. Always building.</span>
+                                         </p>
                                     </div>
 
                                     {/* Social Links */}

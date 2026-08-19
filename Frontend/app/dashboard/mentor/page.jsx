@@ -64,7 +64,7 @@ export default function MentorDashboard() {
                         animate={{ opacity: 1, x: 0 }}
                     >
                         <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-                            Mentor Hub: {user?.fullName?.split(' ')[0]} 🏛️
+                            Mentor Hub: {user?.fullName?.split(' ')[0]}
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-2">
                             Overview of your mentorship performance and upcoming bookings.
