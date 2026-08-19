@@ -41,22 +41,26 @@ export default function RegisterPage() {
         setIsLoading(true);
 
         try {
+            // Step 1: Create Firebase email/password account
             const userCredential = await createUserWithEmailAndPassword(
                 auth,
                 formData.email,
                 formData.password
             );
 
-            const token = await userCredential.user.getIdToken();
-
+            // Step 2: Register with our backend — send the TYPED name, not Firebase token
+            // POST /api/auth/register preserves the manually entered fullName
             const response = await api.post('/auth/register', {
-                fullName: formData.fullName,
-                role: formData.role,
+                fullName:    formData.fullName,
+                email:       formData.email,
+                role:        formData.role,
                 firebaseUid: userCredential.user.uid,
-                email: formData.email,
             });
 
-            login(response.data.user, response.data.token || token);
+            const userData  = response.data.user  || response.data;
+            const authToken = response.data.token || await userCredential.user.getIdToken();
+
+            login(userData, authToken);
             toast.success('Account created successfully!');
             router.push('/onboarding');
         } catch (error) {
@@ -70,20 +74,24 @@ export default function RegisterPage() {
     const handleGoogleSignUp = async () => {
         try {
             const result = await signInWithPopup(auth, googleProvider);
-            const token = await result.user.getIdToken();
+            const token  = await result.user.getIdToken();
 
-            const response = await api.post('/auth/google', {
-                token,
-                role: formData.role,
+            // POST /api/auth/verify is the correct Firebase token verification endpoint
+            const response = await api.post('/auth/verify', {
+                firebaseToken: token,
+                role:          formData.role,
             });
 
-            login(response.data.user, response.data.token || token);
+            const userData = response.data.user || response.data;
+            const authToken = response.data.token || token;
+
+            login(userData, authToken);
             toast.success('Signed in with Google!');
 
-            if (!response.data.user.isProfileComplete) {
+            if (!userData.isProfileComplete) {
                 router.push('/onboarding');
             } else {
-                router.push(`/dashboard/${response.data.user.role}`);
+                router.push(`/dashboard/${userData.role}`);
             }
         } catch (error) {
             console.error('Google sign-up error:', error);

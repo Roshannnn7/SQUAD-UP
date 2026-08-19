@@ -25,7 +25,20 @@ const userSchema = mongoose.Schema(
             type: String,
             required: true,
         },
+        username: {
+            type: String,
+            unique: true,
+            sparse: true,
+            lowercase: true,
+            trim: true,
+            maxlength: 50,
+        },
         profilePhoto: {
+            type: String,
+            default: '',
+        },
+        avatarUrl: {
+            // Stores selected curated avatar URL (separate from uploaded profilePhoto)
             type: String,
             default: '',
         },
@@ -36,6 +49,16 @@ const userSchema = mongoose.Schema(
         bio: {
             type: String,
             maxlength: 500,
+            default: '',
+        },
+        // Denormalized education info for quick profile display
+        college: {
+            type: String,
+            default: '',
+        },
+        program: {
+            // e.g. "BCA @ Gulbarga University"
+            type: String,
             default: '',
         },
         isProfileComplete: {

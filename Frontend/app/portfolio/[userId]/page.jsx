@@ -7,7 +7,8 @@ import api from '@/lib/axios';
 import Link from 'next/link';
 import {
     FiGithub, FiLinkedin, FiGlobe, FiTwitter, FiMapPin,
-    FiStar, FiUsers, FiAward, FiZap, FiExternalLink, FiShare2, FiBookOpen
+    FiStar, FiUsers, FiAward, FiZap, FiExternalLink, FiShare2,
+    FiBookOpen, FiBriefcase, FiCode, FiTrendingUp
 } from 'react-icons/fi';
 import { BsFire } from 'react-icons/bs';
 
@@ -17,39 +18,39 @@ const LEVEL_TITLES = {
 
 const getLevelTitle = (level) => {
     const levels = Object.keys(LEVEL_TITLES).map(Number).sort((a, b) => b - a);
-    for (const l of levels) {
-        if (level >= l) return LEVEL_TITLES[l];
-    }
+    for (const l of levels) if (level >= l) return LEVEL_TITLES[l];
     return 'Beginner';
 };
 
 const STATUS_COLORS = {
-    'completed': 'bg-green-500/20 text-green-400 border-green-500/30',
+    'completed':   'bg-green-500/20 text-green-400 border-green-500/30',
     'in-progress': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    'planning': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-    'on-hold': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+    'planning':    'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    'on-hold':     'bg-gray-500/20 text-gray-400 border-gray-500/30',
 };
 
 export default function PortfolioPage({ params }) {
     const { userId } = params;
     const [profileData, setProfileData] = useState(null);
-    const [projects, setProjects] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [copied, setCopied] = useState(false);
+    const [projects, setProjects]       = useState([]);
+    const [loading, setLoading]         = useState(true);
+    const [copied, setCopied]           = useState(false);
 
-    useEffect(() => {
-        fetchPortfolio();
-    }, [userId]);
+    useEffect(() => { fetchPortfolio(); }, [userId]);
 
     const fetchPortfolio = async () => {
         try {
             setLoading(true);
             const [profileRes, projectsRes] = await Promise.all([
                 api.get(`/profiles/${userId}`).catch(() => ({ data: null })),
-                api.get(`/projects?creator=${userId}`).catch(() => ({ data: { projects: [] } })),
+                // Fetch all projects where user is a member (not just creator)
+                api.get(`/projects?member=${userId}`).catch(() => ({ data: { projects: [] } })),
             ]);
+
             setProfileData(profileRes.data);
-            setProjects(projectsRes.data?.projects || []);
+            // Support both response shapes: {projects:[]} and {data:[]}
+            const rawProjects = projectsRes.data?.projects || projectsRes.data?.data || [];
+            setProjects(rawProjects);
         } catch (err) {
             console.error(err);
         } finally {
@@ -68,70 +69,88 @@ export default function PortfolioPage({ params }) {
             <div className="min-h-screen bg-gray-950">
                 <Navbar />
                 <div className="max-w-4xl mx-auto px-4 pt-32 space-y-6">
-                    <div className="h-64 bg-white/5 animate-pulse rounded-3xl" />
-                    <div className="h-48 bg-white/5 animate-pulse rounded-3xl" />
-                    <div className="h-48 bg-white/5 animate-pulse rounded-3xl" />
+                    {[1, 2, 3].map(i => <div key={i} className="h-48 bg-white/5 animate-pulse rounded-3xl" />)}
                 </div>
             </div>
         );
     }
 
-    const user = profileData?.user || profileData;
-    const studentProfile = profileData?.studentProfile;
+    // Normalise data paths: profileController.getUserProfile returns { success, data }
+    const profilePayload  = profileData?.data || profileData;
+    const user            = profilePayload;
+    // roleProfile holds the StudentProfile / MentorProfile subdoc
+    const roleProfile     = profilePayload?.roleProfile;
+    // college lives on User (denormalized) or in roleProfile
+    const college         = user?.college || roleProfile?.college || '';
+    const program         = user?.program || roleProfile?.degree || '';
+    const experiences     = profilePayload?.experiences || [];
+    const educationList   = profilePayload?.education || [];
+    const mutualSquads    = profilePayload?.mutualSquads || [];
 
     return (
         <div className="min-h-screen bg-gray-950 text-white">
             <Navbar />
 
             {/* Cover Photo */}
-            <div className="relative h-64 w-full mt-16 overflow-hidden">
-                {user?.coverPhoto ? (
-                    <img src={user.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-violet-900 via-purple-800 to-indigo-900" />
-                )}
+            <div className="relative h-60 w-full mt-16 overflow-hidden">
+                {user?.coverPhoto
+                    ? <img src={user.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
+                    : <div className="w-full h-full bg-gradient-to-br from-violet-900 via-purple-800 to-indigo-900" />
+                }
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/20 to-transparent" />
 
-                {/* Share Button */}
-                <button
-                    onClick={copyPortfolioLink}
-                    className="absolute top-4 right-4 flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full text-sm font-semibold transition-all"
-                >
+                <button onClick={copyPortfolioLink}
+                    className="absolute top-4 right-4 flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full text-sm font-semibold transition-all">
                     <FiShare2 className="w-4 h-4" />
                     {copied ? 'Copied!' : 'Share Portfolio'}
                 </button>
             </div>
 
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20 -mt-24 relative">
-                {/* Profile Header Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-3xl p-8 mb-6"
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-24 -mt-24 relative space-y-6">
+
+                {/* ── Profile Header ─────────────────────────── */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                    className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-3xl p-8"
                 >
                     <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
                         {/* Avatar */}
-                        <div className="relative">
+                        <div className="relative flex-shrink-0">
                             <img
-                                src={user?.profilePhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.fullName}`}
+                                src={user?.profilePhoto || user?.avatarUrl
+                                    || `https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${encodeURIComponent(user?.fullName || 'user')}&backgroundColor=b6e3f4`}
                                 alt={user?.fullName}
                                 className="w-28 h-28 rounded-2xl border-4 border-violet-500 shadow-2xl shadow-violet-500/30 object-cover"
                             />
-                            {/* Online status */}
                             {user?.status === 'online' && (
-                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-gray-950 rounded-full" />
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-gray-950 rounded-full" />
                             )}
                         </div>
 
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-3 mb-2">
                                 <h1 className="text-3xl font-black text-white">{user?.fullName}</h1>
-                                {/* Level badge */}
                                 <span className="bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold px-3 py-1 rounded-full">
                                     Lv.{user?.level || 1} · {getLevelTitle(user?.level || 1)}
                                 </span>
                             </div>
-                            <p className="text-gray-400 text-sm mb-3">{user?.headline || 'Student Developer'}</p>
+
+                            {/* Handle */}
+                            {user?.username && (
+                                <p className="text-violet-400 text-sm font-semibold mb-1">@{user.username}</p>
+                            )}
+
+                            {/* Headline */}
+                            <p className="text-gray-400 text-sm mb-2">{user?.headline || (program ? `${program} Student` : 'Student Developer')}</p>
+
+                            {/* College */}
+                            {(college || program) && (
+                                <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
+                                    <FiBookOpen className="w-3 h-3 text-violet-400" />
+                                    {program && <span className="text-gray-300 font-semibold">{program}</span>}
+                                    {college && program && <span className="text-gray-500"> at </span>}
+                                    {college && <span>{college}</span>}
+                                </div>
+                            )}
 
                             {/* Location */}
                             {user?.location?.city && (
@@ -142,28 +161,28 @@ export default function PortfolioPage({ params }) {
                             )}
 
                             {/* Social Links */}
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 {user?.socialLinks?.github && (
                                     <a href={user.socialLinks.github} target="_blank" rel="noopener noreferrer"
-                                        className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+                                        className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all" title="GitHub">
                                         <FiGithub className="w-4 h-4" />
                                     </a>
                                 )}
                                 {user?.socialLinks?.linkedin && (
                                     <a href={user.socialLinks.linkedin} target="_blank" rel="noopener noreferrer"
-                                        className="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl transition-all">
+                                        className="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl transition-all" title="LinkedIn">
                                         <FiLinkedin className="w-4 h-4" />
                                     </a>
                                 )}
                                 {user?.socialLinks?.twitter && (
                                     <a href={user.socialLinks.twitter} target="_blank" rel="noopener noreferrer"
-                                        className="p-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-xl transition-all">
+                                        className="p-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-xl transition-all" title="Twitter">
                                         <FiTwitter className="w-4 h-4" />
                                     </a>
                                 )}
                                 {user?.socialLinks?.portfolio && (
                                     <a href={user.socialLinks.portfolio} target="_blank" rel="noopener noreferrer"
-                                        className="p-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-xl transition-all">
+                                        className="p-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-xl transition-all" title="Portfolio">
                                         <FiGlobe className="w-4 h-4" />
                                     </a>
                                 )}
@@ -173,7 +192,7 @@ export default function PortfolioPage({ params }) {
                         {/* Stats */}
                         <div className="grid grid-cols-3 gap-4 md:text-right">
                             <div className="text-center">
-                                <p className="text-2xl font-black text-white">{user?.points?.toLocaleString() || 0}</p>
+                                <p className="text-2xl font-black text-white">{(user?.points || 0).toLocaleString()}</p>
                                 <p className="text-xs text-gray-400 uppercase tracking-widest">XP</p>
                             </div>
                             <div className="text-center">
@@ -193,25 +212,26 @@ export default function PortfolioPage({ params }) {
                     {/* Bio */}
                     {user?.bio && (
                         <div className="mt-6 pt-6 border-t border-white/10">
-                            <p className="text-gray-300 leading-relaxed">{user.bio}</p>
+                            <p className="text-gray-300 leading-relaxed text-sm">{user.bio}</p>
                         </div>
                     )}
                 </motion.div>
 
+                {/* ── Content Grid ───────────────────────────── */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
                     {/* Left Column */}
                     <div className="space-y-6">
                         {/* Skills */}
-                        {user?.skills?.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1 }}
+                        {(user?.skills?.length > 0) && (
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                                 className="bg-white/5 border border-white/10 rounded-3xl p-6"
                             >
-                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Skills</h3>
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <FiCode className="text-violet-400" /> Skills
+                                </h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {user.skills.map((skill) => (
+                                    {user.skills.map(skill => (
                                         <span key={skill}
                                             className="bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-semibold px-3 py-1.5 rounded-full">
                                             {skill}
@@ -221,12 +241,50 @@ export default function PortfolioPage({ params }) {
                             </motion.div>
                         )}
 
+                        {/* Education */}
+                        {(college || educationList.length > 0) && (
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                                className="bg-white/5 border border-white/10 rounded-3xl p-6"
+                            >
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <FiBookOpen className="text-blue-400" /> Education
+                                </h3>
+                                {/* Primary: from StudentProfile (denormalized on User) */}
+                                {college && (
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0">
+                                            <FiBookOpen className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-semibold text-sm">{college}</p>
+                                            {program && <p className="text-gray-400 text-xs">{program}</p>}
+                                            {roleProfile?.year && <p className="text-gray-500 text-xs mt-0.5">Year {roleProfile.year}</p>}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Additional UserEducation entries */}
+                                {educationList.map((edu, i) => (
+                                    <div key={i} className="flex items-start gap-3 mt-3">
+                                        <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0">
+                                            <FiBookOpen className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-semibold text-sm">{edu.school}</p>
+                                            <p className="text-gray-400 text-xs">{edu.degree} {edu.field && `in ${edu.field}`}</p>
+                                            {edu.startDate && (
+                                                <p className="text-gray-500 text-xs mt-0.5">
+                                                    {new Date(edu.startDate).getFullYear()} – {edu.isCurrent ? 'Present' : edu.endDate ? new Date(edu.endDate).getFullYear() : ''}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </motion.div>
+                        )}
+
                         {/* Badges */}
                         {user?.badges?.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                                 className="bg-white/5 border border-white/10 rounded-3xl p-6"
                             >
                                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -235,49 +293,53 @@ export default function PortfolioPage({ params }) {
                                 <div className="grid grid-cols-3 gap-3">
                                     {user.badges.map((badge, i) => (
                                         <div key={i} title={badge.name}
-                                            className="bg-white/5 rounded-2xl p-3 text-center group hover:scale-110 transition-transform cursor-default">
-                                            <div className="flex items-center justify-center text-amber-400 mb-1">
-                                                <FiAward className="w-6 h-6" />
-                                            </div>
+                                            className="bg-white/5 rounded-2xl p-3 text-center hover:scale-110 transition-transform cursor-default">
+                                            <FiAward className="w-6 h-6 text-amber-400 mx-auto mb-1" />
                                             <p className="text-[10px] text-gray-400 truncate">{badge.name}</p>
                                         </div>
                                     ))}
                                 </div>
                             </motion.div>
                         )}
+                    </div>
 
-                        {/* Education */}
-                        {studentProfile?.institution && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className="bg-white/5 border border-white/10 rounded-3xl p-6"
-                            >
-                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Education</h3>
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0">
-                                        <FiBookOpen className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-white font-semibold text-sm">{studentProfile.institution}</p>
-                                        <p className="text-gray-400 text-xs">{studentProfile.course || studentProfile.fieldOfStudy}</p>
-                                        <p className="text-gray-500 text-xs">{studentProfile.graduationYear}</p>
-                                    </div>
+                    {/* Right Column */}
+                    <div className="lg:col-span-2 space-y-6">
+
+                        {/* Career Journey Timeline */}
+                        {experiences.length > 0 && (
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <FiBriefcase className="text-violet-400" /> Career Journey
+                                </h3>
+                                <div className="space-y-4">
+                                    {experiences.map((exp, i) => (
+                                        <motion.div key={i}
+                                            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * i }}
+                                            className="bg-white/5 border border-white/10 rounded-2xl p-5 flex gap-4"
+                                        >
+                                            <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center text-violet-400 flex-shrink-0">
+                                                <FiBriefcase className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-white">{exp.title}</h4>
+                                                <p className="text-sm text-gray-400">{exp.company}</p>
+                                                {exp.description && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{exp.description}</p>}
+                                                <p className="text-[10px] text-violet-400 font-bold uppercase tracking-wider mt-2">
+                                                    {exp.startDate && new Date(exp.startDate).getFullYear()}
+                                                    {exp.isCurrent ? ' – Present' : exp.endDate ? ` – ${new Date(exp.endDate).getFullYear()}` : ''}
+                                                </p>
+                                            </div>
+                                        </motion.div>
+                                    ))}
                                 </div>
                             </motion.div>
                         )}
-                    </div>
 
-                    {/* Right Column — Projects */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.15 }}
-                        >
+                        {/* Projects & Squads */}
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
                             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <FiUsers className="text-violet-400" /> Projects & Squads
+                                <FiUsers className="text-violet-400" /> Projects &amp; Squads
                             </h3>
 
                             {projects.length === 0 ? (
@@ -290,19 +352,16 @@ export default function PortfolioPage({ params }) {
                             ) : (
                                 <div className="space-y-4">
                                     {projects.map((project, i) => (
-                                        <motion.div
-                                            key={project._id}
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 0.1 * i }}
+                                        <motion.div key={project._id}
+                                            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * i }}
                                             className="bg-white/5 border border-white/10 hover:border-violet-500/30 rounded-3xl p-6 transition-all group"
                                         >
                                             <div className="flex items-start justify-between gap-4 mb-3">
-                                                <div>
+                                                <div className="min-w-0">
                                                     <Link href={`/squads/${project._id}`}>
-                                                        <h4 className="font-bold text-white group-hover:text-violet-400 transition-colors flex items-center gap-2">
+                                                        <h4 className="font-bold text-white group-hover:text-violet-400 transition-colors flex items-center gap-2 truncate">
                                                             {project.name}
-                                                            <FiExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                            <FiExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 flex-shrink-0" />
                                                         </h4>
                                                     </Link>
                                                     <p className="text-gray-400 text-sm mt-1 line-clamp-2">{project.description}</p>
@@ -312,35 +371,36 @@ export default function PortfolioPage({ params }) {
                                                 </span>
                                             </div>
 
-                                            {/* Skills */}
-                                            <div className="flex flex-wrap gap-2 mb-3">
-                                                {project.skillsRequired?.slice(0, 4).map((skill) => (
-                                                    <span key={skill} className="bg-white/5 text-gray-400 text-xs px-2 py-1 rounded-lg">
-                                                        {skill}
-                                                    </span>
-                                                ))}
-                                            </div>
-
-                                            {/* Progress */}
-                                            <div className="space-y-1">
-                                                <div className="flex justify-between text-xs text-gray-500">
-                                                    <span>Progress</span>
-                                                    <span className="text-violet-400 font-bold">{project.progress}%</span>
+                                            {/* Skill tags */}
+                                            {project.skillsRequired?.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mb-3">
+                                                    {project.skillsRequired.slice(0, 4).map(skill => (
+                                                        <span key={skill} className="bg-white/5 text-gray-400 text-xs px-2 py-1 rounded-lg">{skill}</span>
+                                                    ))}
                                                 </div>
-                                                <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all"
-                                                        style={{ width: `${project.progress}%` }}
-                                                    />
-                                                </div>
-                                            </div>
+                                            )}
 
-                                            {/* GitHub */}
+                                            {/* Progress bar */}
+                                            {typeof project.progress === 'number' && (
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between text-xs text-gray-500">
+                                                        <span>Progress</span>
+                                                        <span className="text-violet-400 font-bold">{project.progress}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all"
+                                                            style={{ width: `${project.progress}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* GitHub link */}
                                             {project.githubRepo && (
                                                 <a href={project.githubRepo} target="_blank" rel="noopener noreferrer"
-                                                    className="mt-3 flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors">
-                                                    <FiGithub className="w-3 h-3" />
-                                                    View on GitHub
+                                                    className="mt-3 flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors">
+                                                    <FiGithub className="w-3 h-3" /> View on GitHub
                                                 </a>
                                             )}
                                         </motion.div>
@@ -348,6 +408,24 @@ export default function PortfolioPage({ params }) {
                                 </div>
                             )}
                         </motion.div>
+
+                        {/* Mutual Squads (visible when viewing another user's portfolio) */}
+                        {mutualSquads.length > 0 && (
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <FiUsers className="text-cyan-400" /> Mutual Squads
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {mutualSquads.map(squad => (
+                                        <Link key={squad._id} href={`/squads/${squad._id}`}
+                                            className="bg-white/5 border border-white/10 hover:border-cyan-500/30 rounded-2xl p-4 transition-all group">
+                                            <h4 className="font-bold text-white group-hover:text-cyan-400 transition-colors text-sm">{squad.name}</h4>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter mt-1">{squad.category} · {squad.status}</p>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
                     </div>
                 </div>
             </div>

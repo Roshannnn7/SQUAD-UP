@@ -56,12 +56,65 @@ const buildAuthResponse = (user, accessToken, refreshToken, extraFields = {}) =>
     _id:               user._id,
     email:             user.email,
     fullName:          user.fullName,
+    username:          user.username,
     role:              user.role,
-    profilePhoto:      user.profilePhoto,
+    profilePhoto:      user.profilePhoto || user.avatarUrl || '',
+    avatarUrl:         user.avatarUrl || '',
+    college:           user.college || '',
+    program:           user.program || '',
+    bio:               user.bio || '',
     isProfileComplete: user.isProfileComplete,
     token:             accessToken,
     refreshToken,
     ...extraFields,
+});
+
+// ─────────────────────────────────────────────
+// @desc    Manual email/password registration (name always from form)
+// @route   POST /api/auth/register
+// @access  Public
+// ─────────────────────────────────────────────
+const registerManual = asyncHandler(async (req, res) => {
+    const { fullName, email, role, firebaseUid } = req.body;
+
+    if (!fullName || !email) {
+        res.status(400);
+        throw new Error('Full name and email are required');
+    }
+
+    // Check if user already exists
+    const existing = await User.findOne({ email });
+    if (existing) {
+        // Already registered — just return tokens (handles double-submit from Firebase)
+        const accessToken  = generateAccessToken(existing._id);
+        const refreshToken = await createRefreshToken(existing._id, req);
+        return res.json({ user: buildAuthResponse(existing, accessToken, refreshToken), token: accessToken });
+    }
+
+    // Generate a unique username from the full name
+    const baseUsername = fullName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    let username = baseUsername;
+    let counter  = 1;
+    while (await User.findOne({ username })) {
+        username = `${baseUsername}${counter++}`;
+    }
+
+    const user = await User.create({
+        fullName,           // ALWAYS the manually typed name — never Gmail
+        email,
+        role:         role || 'student',
+        firebaseUid:  firebaseUid || undefined,
+        username,
+        profilePhoto: '',   // No photo on signup — chosen during onboarding
+        avatarUrl:    '',
+    });
+
+    const accessToken  = generateAccessToken(user._id);
+    const refreshToken = await createRefreshToken(user._id, req);
+
+    logger.info('New user registered manually', { userId: user._id, role: user.role });
+
+    res.status(201).json({ user: buildAuthResponse(user, accessToken, refreshToken), token: accessToken });
 });
 
 // ─────────────────────────────────────────────
@@ -132,9 +185,11 @@ const verifyFirebaseToken = asyncHandler(async (req, res) => {
         throw new Error('Invalid Firebase token');
     }
 
-    const { uid, email, name, picture } = decodedToken;
+    const { uid, email, name, picture, firebase } = decodedToken;
+    const signInProvider = firebase?.sign_in_provider || '';
+    const isGoogleOAuth  = signInProvider === 'google.com';
 
-    let user = await User.findOne({ firebaseUid: uid });
+    let user = await User.findOne({ $or: [{ firebaseUid: uid }, { email }] });
 
     if (user) {
         if (!user.isActive) {
@@ -142,6 +197,12 @@ const verifyFirebaseToken = asyncHandler(async (req, res) => {
             throw new Error('Account has been suspended');
         }
 
+        // Only update name/photo from Google OAuth — never from email/password token
+        if (isGoogleOAuth) {
+            if (name && !user.fullName) user.fullName = name;
+            if (picture && !user.profilePhoto) user.profilePhoto = picture;
+        }
+        if (!user.firebaseUid) user.firebaseUid = uid;
         user.lastLogin = new Date();
         await user.save();
 
@@ -161,13 +222,22 @@ const verifyFirebaseToken = asyncHandler(async (req, res) => {
         return res.json(buildAuthResponse(user, accessToken, refreshToken, { profile }));
     }
 
-    // New user — create account
+    // Brand-new user via Google OAuth — use Gmail name and photo
+    const baseUsername = (name || email.split('@')[0]).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    let username = baseUsername;
+    let counter  = 1;
+    while (await User.findOne({ username })) {
+        username = `${baseUsername}${counter++}`;
+    }
+
     user = await User.create({
         firebaseUid:  uid,
         email,
-        fullName:     name || email.split('@')[0],
-        profilePhoto: picture || '',
+        // For Google OAuth: Gmail name is fine since user chose to sign in with Google
+        fullName:     isGoogleOAuth ? (name || email.split('@')[0]) : email.split('@')[0],
+        profilePhoto: isGoogleOAuth ? (picture || '') : '',
         role:         role || 'student',
+        username,
     });
 
     const accessToken  = generateAccessToken(user._id);
@@ -296,25 +366,38 @@ const completeStudentProfile = asyncHandler(async (req, res) => {
         throw new Error('Profile already completed');
     }
 
+    const skillsArr    = Array.isArray(skills)    ? skills    : (skills    ? skills.split(',').map(s => s.trim()).filter(Boolean)    : []);
+    const interestsArr = Array.isArray(interests) ? interests : (interests ? interests.split(',').map(i => i.trim()).filter(Boolean) : []);
+
     const studentProfile = await StudentProfile.create({
         user:            req.user._id,
         college,
         degree,
         year,
         semester:        Number(semester) || 1,
-        skills:          Array.isArray(skills) ? skills : (skills ? skills.split(',').map(s => s.trim()).filter(Boolean) : []),
-        interests:       Array.isArray(interests) ? interests : (interests ? interests.split(',').map(i => i.trim()).filter(Boolean) : []),
+        skills:          skillsArr,
+        interests:       interestsArr,
         githubProfile:   githubProfile || '',
-        linkedinProfile,
-        projectGoals,
-        bio,
+        linkedinProfile: linkedinProfile || '',
+        projectGoals:    projectGoals || '',
+        bio:             bio || '',
     });
 
-    await User.findByIdAndUpdate(req.user._id, {
+    // Sync key fields back to User document for quick access (denormalization)
+    const userUpdates = {
         isProfileComplete: true,
-        fullName:    req.body.fullName    || req.user.fullName,
-        profilePhoto: req.body.profilePhoto || req.user.profilePhoto,
-    });
+        bio:               bio || req.user.bio || '',
+        college:           college || '',
+        program:           degree ? (year ? `${degree} (Year ${year})` : degree) : '',
+        skills:            skillsArr,
+        interests:         interestsArr,
+    };
+    if (req.body.fullName)    userUpdates.fullName    = req.body.fullName;
+    if (req.body.profilePhoto) userUpdates.profilePhoto = req.body.profilePhoto;
+    if (req.body.avatarUrl)   userUpdates.avatarUrl   = req.body.avatarUrl;
+    if (req.body.socialLinks) userUpdates.socialLinks = req.body.socialLinks;
+
+    await User.findByIdAndUpdate(req.user._id, userUpdates);
 
     res.status(201).json({
         message: 'Student profile completed successfully',
@@ -388,11 +471,34 @@ const getMe = asyncHandler(async (req, res) => {
 // @access  Private
 // ─────────────────────────────────────────────
 const updateProfile = asyncHandler(async (req, res) => {
-    const { fullName, profilePhoto } = req.body;
+    const {
+        fullName, profilePhoto, avatarUrl, bio,
+        headline, college, program, username, socialLinks,
+    } = req.body;
+
+    const updates = {};
+    if (fullName)    updates.fullName    = fullName;
+    if (profilePhoto !== undefined) updates.profilePhoto = profilePhoto;
+    if (avatarUrl !== undefined)   updates.avatarUrl   = avatarUrl;
+    if (bio !== undefined)         updates.bio         = bio;
+    if (headline !== undefined)    updates.headline    = headline;
+    if (college !== undefined)     updates.college     = college;
+    if (program !== undefined)     updates.program     = program;
+    if (socialLinks)               updates.socialLinks = socialLinks;
+
+    // Validate username uniqueness if changing
+    if (username) {
+        const taken = await User.findOne({ username, _id: { $ne: req.user._id } });
+        if (taken) {
+            res.status(400);
+            throw new Error('Username is already taken');
+        }
+        updates.username = username.toLowerCase().trim();
+    }
 
     const user = await User.findByIdAndUpdate(
         req.user._id,
-        { fullName, profilePhoto },
+        updates,
         { new: true }
     ).select('-password');
 
@@ -510,6 +616,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+    registerManual,
     loginLocal,
     verifyFirebaseToken,
     refreshAccessToken,
