@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import {
     FiPlus, FiCheckCircle, FiCircle, FiClock, FiUser, FiTrash2,
-    FiArrowLeft, FiEdit2, FiX, FiFlag, FiCalendar, FiMoreVertical, FiTag, FiCheckSquare
+    FiArrowLeft, FiEdit2, FiX, FiFlag, FiCalendar, FiMoreVertical, FiTag, FiCheckSquare, FiUsers
 } from 'react-icons/fi';
 
 const PRIORITY_CONFIG = {

@@ -8,7 +8,7 @@ import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
 import {
     FiArrowLeft, FiPlus, FiFlag, FiCheck, FiClock, FiAlertTriangle,
-    FiEdit2, FiTrash2, FiX, FiCalendar
+    FiEdit2, FiTrash2, FiX, FiCalendar, FiMap
 } from 'react-icons/fi';
 
 const STATUS_CONFIG = {

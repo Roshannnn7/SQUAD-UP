@@ -90,7 +90,7 @@ export default function SquadTemplates() {
                 >
                     All Templates
                 </button>
-                {Object.entries(CATEGORY_ICONS).map(([category, Icon]) => (
+                {Object.entries(CATEGORY_ICONS).map(([category, CategoryIcon]) => (
                     <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
@@ -99,7 +99,7 @@ export default function SquadTemplates() {
                                 : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'
                             }`}
                     >
-                        <Icon className="w-4 h-4" />
+                        <CategoryIcon className="w-4 h-4" />
                         <span className="capitalize">{category.replace('_', '/')}</span>
                     </button>
                 ))}

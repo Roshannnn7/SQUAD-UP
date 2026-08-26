@@ -20,7 +20,8 @@ import {
     FiMenu,
     FiX,
     FiTrendingUp,
-    FiZap
+    FiZap,
+    FiCalendar
 } from 'react-icons/fi';
 
 export default function Navbar() {
