@@ -13,6 +13,9 @@ export default function Notifications() {
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) return;
+
         fetchNotifications();
 
         // Refresh notifications every minute
@@ -21,13 +24,23 @@ export default function Notifications() {
     }, []);
 
     const fetchNotifications = async () => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) return;
+
         try {
-            const res = await api.get('/notifications');
-            setNotifications(res.data);
-            const unread = await api.get('/notifications/unread-count');
-            setUnreadCount(unread.data.count);
+            const [res, unread] = await Promise.allSettled([
+                api.get('/notifications'),
+                api.get('/notifications/unread-count')
+            ]);
+
+            if (res.status === 'fulfilled' && res.value?.data) {
+                setNotifications(res.value.data);
+            }
+            if (unread.status === 'fulfilled' && unread.value?.data) {
+                setUnreadCount(unread.value.data.count || 0);
+            }
         } catch (error) {
-            console.error('Fetch notifications error:', error);
+            console.warn('Fetch notifications notice:', error.message);
         }
     };
 
