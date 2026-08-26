@@ -68,6 +68,8 @@ app.use(logger.request);
 // Connect to MongoDB
 connectDB();
 
+const uploadRoutes = require('./routes/uploadRoutes');
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/mentors', mentorRoutes);
@@ -77,6 +79,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // New feature routes
 const messageEnhancementRoutes = require('./routes/messageEnhancementRoutes');

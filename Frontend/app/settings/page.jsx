@@ -122,32 +122,22 @@ export default function SettingsPage() {
         if (!file) return;
         try {
             setUploading(true);
-
-            const getBase64 = (f) => new Promise((res) => {
-                const reader = new FileReader();
-                reader.onloadend = () => res(reader.result);
-                reader.readAsDataURL(f);
-            });
-
             let finalUrl = '';
 
             try {
-                const storageRef = ref(storage, `profile-photos/${user._id}_${Date.now()}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                finalUrl = await new Promise((resolve, reject) => {
-                    uploadTask.on(
-                        'state_changed',
-                        null,
-                        (err) => reject(err),
-                        async () => {
-                            const url = await getDownloadURL(uploadTask.snapshot.ref);
-                            resolve(url);
-                        }
-                    );
+                const formData = new FormData();
+                formData.append('file', file);
+                const { data } = await api.post('/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
                 });
-            } catch (fbErr) {
-                console.warn('Firebase Storage upload blocked by CORS — using Data URL fallback:', fbErr.message);
-                finalUrl = await getBase64(file);
+                finalUrl = data.url;
+            } catch (uploadErr) {
+                console.warn('Backend upload error — using Data URL fallback:', uploadErr.message);
+                const reader = new FileReader();
+                finalUrl = await new Promise((res) => {
+                    reader.onloadend = () => res(reader.result);
+                    reader.readAsDataURL(file);
+                });
             }
 
             setForm(prev => ({ ...prev, profilePhoto: finalUrl, avatarUrl: '' }));

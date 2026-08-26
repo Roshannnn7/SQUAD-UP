@@ -50,24 +50,30 @@ export default function CreatePost({ onPostCreated }) {
 
         try {
             setUploading(true);
-            const storageRef = ref(storage, `post-media/${user._id}_${Date.now()}`);
-            const uploadTask = uploadBytesResumable(storageRef, file);
+            let finalUrl = '';
 
-            uploadTask.on('state_changed', null,
-                (error) => {
-                    console.error('Upload error:', error);
-                    toast.error('Failed to upload media');
-                    setUploading(false);
-                },
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    setMediaUrls([...mediaUrls, { url: downloadURL, type: file.type.startsWith('image/') ? 'image' : 'video' }]);
-                    toast.success('Media uploaded!');
-                    setUploading(false);
-                }
-            );
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                const { data } = await api.post('/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                finalUrl = data.url;
+            } catch (uploadErr) {
+                console.warn('Cloudinary upload fallback to Data URL:', uploadErr.message);
+                const reader = new FileReader();
+                finalUrl = await new Promise((res) => {
+                    reader.onloadend = () => res(reader.result);
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            setMediaUrls([...mediaUrls, { url: finalUrl, type: file.type.startsWith('image/') ? 'image' : 'video' }]);
+            toast.success('Media uploaded!');
         } catch (error) {
             console.error('Media upload error:', error);
+            toast.error('Failed to upload media');
+        } finally {
             setUploading(false);
         }
     };

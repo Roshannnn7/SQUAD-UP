@@ -155,32 +155,22 @@ function ProfileContent() {
         if (!file) return;
         try {
             setUploading(true);
-
-            const getBase64 = (f) => new Promise((res) => {
-                const reader = new FileReader();
-                reader.onloadend = () => res(reader.result);
-                reader.readAsDataURL(f);
-            });
-
             let finalPhotoUrl = '';
 
             try {
-                const storageRef = ref(storage, `profile-photos/${user._id}_${Date.now()}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                finalPhotoUrl = await new Promise((resolve, reject) => {
-                    uploadTask.on(
-                        'state_changed',
-                        null,
-                        (err) => reject(err),
-                        async () => {
-                            const url = await getDownloadURL(uploadTask.snapshot.ref);
-                            resolve(url);
-                        }
-                    );
+                const formData = new FormData();
+                formData.append('file', file);
+                const { data } = await api.post('/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
                 });
-            } catch (fbErr) {
-                console.warn('Firebase Storage upload blocked by CORS or unavailable — using Data URL fallback:', fbErr.message);
-                finalPhotoUrl = await getBase64(file);
+                finalPhotoUrl = data.url;
+            } catch (uploadErr) {
+                console.warn('Backend upload error — using Data URL fallback:', uploadErr.message);
+                const reader = new FileReader();
+                finalPhotoUrl = await new Promise((res) => {
+                    reader.onloadend = () => res(reader.result);
+                    reader.readAsDataURL(file);
+                });
             }
 
             setFormData(prev => ({ ...prev, profilePhoto: finalPhotoUrl, avatarUrl: '' }));
