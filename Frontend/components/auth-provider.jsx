@@ -64,13 +64,20 @@ export function AuthProvider({ children }) {
                         setRefreshToken(storedRefreshToken);
                         setUser(JSON.parse(storedUser));
 
-                        // Verify token with backend (non-blocking)
+                        // Verify token with backend — with 10s timeout to prevent hanging on cold starts
                         try {
-                            const response = await api.get('/auth/me');
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                            const response = await api.get('/auth/me', {
+                                signal: controller.signal,
+                            });
+                            clearTimeout(timeoutId);
                             setUser(response.data);
                         } catch (verifyError) {
-                            // If token verification fails, try to refresh
-                            if (verifyError.response?.status === 401 && storedRefreshToken) {
+                            if (verifyError.name === 'AbortError' || verifyError.code === 'ERR_CANCELED') {
+                                console.warn('Auth verification timed out — using cached user data');
+                            } else if (verifyError.response?.status === 401 && storedRefreshToken) {
                                 console.log('Token expired, attempting refresh...');
                                 const refreshed = await refreshAccessToken();
                                 if (!refreshed) {

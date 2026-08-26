@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './auth-provider';
-import { useTheme } from './theme-provider';
+import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import Notifications from './Notifications';
 import {
@@ -25,7 +25,8 @@ import {
 
 export default function Navbar() {
     const { user, logout } = useAuth();
-    const { theme, toggleTheme } = useTheme();
+    const { theme, setTheme } = useTheme();
+    const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const router = useRouter();

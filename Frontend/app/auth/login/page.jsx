@@ -10,14 +10,15 @@ import { signInWithEmailAndPassword, signInWithPopup, GithubAuthProvider } from 
 import { auth, googleProvider, githubProvider } from '../../../lib/firebase';
 import api from '../../../lib/axios';
 import { useAuth } from '../../../components/auth-provider';
-import { useTheme } from '../../../components/theme-provider';
+import { useTheme } from 'next-themes';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
     const router = useRouter();
     const { login } = useAuth();
-    const { theme, toggleTheme } = useTheme();
+    const { theme, setTheme } = useTheme();
+    const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
     const [formData, setFormData] = useState({
         email: '',

@@ -25,13 +25,14 @@ export default function SquadMatchCard() {
         try {
             setLoading(true);
             // Fetch public squads and score them client-side
-            const [squadsRes, myProjectsRes] = await Promise.all([
+            const [squadsResult, myProjectsResult] = await Promise.allSettled([
                 api.get('/projects?limit=50'),
                 api.get('/projects/my'),
             ]);
 
-            const allSquads = squadsRes.data?.projects || [];
-            const myProjectIds = new Set((myProjectsRes.data || []).map((p) => p._id));
+            const allSquads = squadsResult.status === 'fulfilled' ? (squadsResult.value.data?.projects || []) : [];
+            const myProjectsData = myProjectsResult.status === 'fulfilled' ? (myProjectsResult.value.data || []) : [];
+            const myProjectIds = new Set(myProjectsData.map((p) => p._id));
 
             const userSkills = new Set([
                 ...(user?.skills || []).map((s) => s.toLowerCase()),

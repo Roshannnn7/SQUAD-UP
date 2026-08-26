@@ -19,25 +19,28 @@ import {
 import Link from 'next/link';
 
 export default function MentorDashboard() {
-    const { user } = useAuth();
+    const { user, isInitialized } = useAuth();
     const [stats, setStats] = useState(null);
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchDashboardData();
-    }, []);
+        if (isInitialized && user && (user.role === 'mentor' || user.role === 'admin')) {
+            fetchDashboardData();
+        } else if (isInitialized) {
+            setLoading(false);
+        }
+    }, [isInitialized, user]);
 
     const fetchDashboardData = async () => {
-        if (!user || (user.role !== 'mentor' && user.role !== 'admin')) return;
         try {
             setLoading(true);
-            const [statsRes, bookingsRes] = await Promise.all([
+            const [statsResult, bookingsResult] = await Promise.allSettled([
                 api.get('/mentors/dashboard/stats'),
                 api.get('/bookings?type=upcoming')
             ]);
-            setStats(statsRes.data);
-            setBookings(bookingsRes.data);
+            if (statsResult.status === 'fulfilled') setStats(statsResult.value.data);
+            if (bookingsResult.status === 'fulfilled') setBookings(bookingsResult.value.data || []);
         } catch (error) {
             console.error('Fetch dashboard data error:', error);
         } finally {

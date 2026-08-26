@@ -82,6 +82,9 @@ const registerManual = asyncHandler(async (req, res) => {
         throw new Error('Full name and email are required');
     }
 
+    // SECURITY: Never allow self-registration as admin
+    const sanitizedRole = (role === 'mentor') ? 'mentor' : 'student';
+
     // Check if user already exists
     const existing = await User.findOne({ email });
     if (existing) {
@@ -102,7 +105,7 @@ const registerManual = asyncHandler(async (req, res) => {
     const user = await User.create({
         fullName,           // ALWAYS the manually typed name — never Gmail
         email,
-        role:         role || 'student',
+        role:         sanitizedRole,
         firebaseUid:  firebaseUid || undefined,
         username,
         profilePhoto: '',   // No photo on signup — chosen during onboarding
@@ -230,13 +233,16 @@ const verifyFirebaseToken = asyncHandler(async (req, res) => {
         username = `${baseUsername}${counter++}`;
     }
 
+    // SECURITY: Never allow self-registration as admin via Firebase
+    const sanitizedRole = (role === 'mentor') ? 'mentor' : 'student';
+
     user = await User.create({
         firebaseUid:  uid,
         email,
         // For Google OAuth: Gmail name is fine since user chose to sign in with Google
         fullName:     isGoogleOAuth ? (name || email.split('@')[0]) : email.split('@')[0],
         profilePhoto: isGoogleOAuth ? (picture || '') : '',
-        role:         role || 'student',
+        role:         sanitizedRole,
         username,
     });
 

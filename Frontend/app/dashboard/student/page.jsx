@@ -22,7 +22,7 @@ import { BsFire } from 'react-icons/bs';
 import Link from 'next/link';
 
 export default function StudentDashboard() {
-    const { user } = useAuth();
+    const { user, isInitialized } = useAuth();
     const [projects, setProjects] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [mentors, setMentors] = useState([]);
@@ -33,16 +33,17 @@ export default function StudentDashboard() {
         const fetchDashboardData = async () => {
             try {
                 setLoading(true);
-                const [projectsRes, bookingsRes, mentorsRes, unreadRes] = await Promise.all([
+                const [projectsResult, bookingsResult, mentorsResult, unreadResult] = await Promise.allSettled([
                     api.get('/projects/my'),
                     api.get('/bookings?type=upcoming'),
                     api.get('/mentors?limit=3'),
                     api.get('/notifications/unread-count')
                 ]);
-                setProjects(projectsRes.data);
-                setBookings(bookingsRes.data);
-                setMentors(mentorsRes.data.slice(0, 3));
-                setUnreadCount(unreadRes.data.count);
+
+                if (projectsResult.status === 'fulfilled') setProjects(projectsResult.value.data || []);
+                if (bookingsResult.status === 'fulfilled') setBookings(bookingsResult.value.data || []);
+                if (mentorsResult.status === 'fulfilled') setMentors((mentorsResult.value.data || []).slice(0, 3));
+                if (unreadResult.status === 'fulfilled') setUnreadCount(unreadResult.value.data?.count || 0);
             } catch (error) {
                 console.error('Dashboard fetch error:', error);
             } finally {
@@ -50,8 +51,12 @@ export default function StudentDashboard() {
             }
         };
 
-        fetchDashboardData();
-    }, []);
+        if (isInitialized && user) {
+            fetchDashboardData();
+        } else if (isInitialized && !user) {
+            setLoading(false);
+        }
+    }, [isInitialized, user]);
 
     const stats = [
         { label: 'Active Squads', value: projects.length.toString(), icon: <FiTrendingUp />, color: 'text-blue-600', bg: 'bg-blue-100', href: '/squads' },
