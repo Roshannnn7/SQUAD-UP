@@ -122,21 +122,33 @@ export default function BookingsPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="glassmorphism p-6 rounded-3xl border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-6"
                             >
-                                <div className="flex items-center space-x-6">
+                                <div className="flex items-start space-x-6">
                                     <img
-                                        src={(user.role === 'student' ? booking.mentor?.profilePhoto : booking.student?.profilePhoto) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.role === 'student' ? booking.mentor?.fullName : booking.student?.fullName}`}
-                                        className="w-16 h-16 rounded-2xl object-cover"
+                                        src={(user?.role === 'student' ? booking.mentor?.profilePhoto : booking.student?.profilePhoto) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.role === 'student' ? booking.mentor?.fullName : booking.student?.fullName}`}
+                                        className="w-16 h-16 rounded-2xl object-cover shrink-0"
                                         alt=""
                                     />
                                     <div>
-                                        <div className="flex items-center gap-3 mb-1">
+                                        <div className="flex flex-wrap items-center gap-3 mb-1">
                                             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                                                {user.role === 'student' ? booking.mentor?.fullName : booking.student?.fullName}
+                                                {user?.role === 'student' ? booking.mentor?.fullName : booking.student?.fullName}
                                             </h3>
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getStatusColor(booking.status)}`}>
                                                 {booking.status}
                                             </span>
+                                            {booking.project?.name && (
+                                                <span className="px-2.5 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-[10px] font-bold rounded-full">
+                                                    Project: {booking.project.name}
+                                                </span>
+                                            )}
                                         </div>
+
+                                        {(booking.problemStatement || booking.notes) && (
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 italic bg-gray-50 dark:bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-100 dark:border-gray-800">
+                                                "{booking.problemStatement || booking.notes}"
+                                            </p>
+                                        )}
+
                                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                                             <span className="flex items-center gap-1"><FiCalendar className="text-primary-500" /> {new Date(booking.scheduledDate).toLocaleDateString()}</span>
                                             <span className="flex items-center gap-1"><FiClock className="text-primary-500" /> {booking.startTime} - {booking.endTime}</span>

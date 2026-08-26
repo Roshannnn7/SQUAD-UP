@@ -32,6 +32,9 @@ export default function MentorProfilePage() {
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [bookingNotes, setBookingNotes] = useState('');
+    const [userProjects, setUserProjects] = useState([]);
+    const [selectedProjectId, setSelectedProjectId] = useState('');
+    const [problemStatement, setProblemStatement] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -51,6 +54,21 @@ export default function MentorProfilePage() {
         }
     };
 
+    const handleOpenBookingModal = async () => {
+        setIsBookingModalOpen(true);
+        if (currentUser) {
+            try {
+                const res = await api.get('/projects/my');
+                setUserProjects(res.data || []);
+                if (res.data && res.data.length > 0) {
+                    setSelectedProjectId(res.data[0]._id);
+                }
+            } catch (err) {
+                console.error('Failed to fetch user projects:', err);
+            }
+        }
+    };
+
     const handleBooking = async () => {
         if (!selectedSlot) {
             toast.error('Please select a time slot.');
@@ -62,14 +80,16 @@ export default function MentorProfilePage() {
             await api.post('/bookings', {
                 mentorId: mentor.user._id,
                 availabilityId: selectedSlot._id,
-                scheduledDate: selectedSlot.specificDate || new Date(), // Simulating date for recurring slots
+                scheduledDate: selectedSlot.specificDate || new Date(),
                 mode: 'Online',
-                notes: bookingNotes
+                notes: bookingNotes,
+                projectId: selectedProjectId || undefined,
+                problemStatement: problemStatement || bookingNotes
             });
 
             toast.success('Booking request sent successfully!');
             setIsBookingModalOpen(false);
-            router.push('/dashboard/student');
+            router.push('/bookings');
         } catch (error) {
             console.error('Booking error:', error);
             toast.error(error.response?.data?.message || 'Failed to book session.');
@@ -245,7 +265,7 @@ export default function MentorProfilePage() {
                             </div>
 
                             <button
-                                onClick={() => setIsBookingModalOpen(true)}
+                                onClick={handleOpenBookingModal}
                                 className="w-full btn-primary py-4 text-lg font-bold flex items-center justify-center gap-2"
                             >
                                 <FiCalendar />
@@ -301,11 +321,49 @@ export default function MentorProfilePage() {
                                 </div>
 
                                 <div className="space-y-6">
+                                    {/* Select Project Context */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                                            Select Project You Need Help With
+                                        </label>
+                                        {userProjects.length > 0 ? (
+                                            <select
+                                                value={selectedProjectId}
+                                                onChange={(e) => setSelectedProjectId(e.target.value)}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                                            >
+                                                {userProjects.map((p) => (
+                                                    <option key={p._id} value={p._id}>
+                                                        {p.name} ({p.category || 'Project'})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-xs rounded-xl">
+                                                No active projects found. You can still book a general advice session.
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Problem Statement */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                                            What specific problem or blocker are you stuck on?
+                                        </label>
+                                        <textarea
+                                            rows={2}
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+                                            placeholder="e.g. Need help optimizing document parsing performance & setting up PostgreSQL schema..."
+                                            value={problemStatement}
+                                            onChange={(e) => setProblemStatement(e.target.value)}
+                                        />
+                                    </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
                                             Select available time slot
                                         </label>
-                                        <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-2">
+                                        <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2">
                                             {mentor.availability && mentor.availability.length > 0 ? (
                                                 mentor.availability.map((slot) => (
                                                     <button

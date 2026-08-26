@@ -160,8 +160,8 @@ export default function LandingPage() {
                             transition={{ duration: 0.4 }}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800/50 text-violet-700 dark:text-violet-300 text-sm font-semibold mb-8"
                         >
-                            <FiUsers className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                            <span>Human-Centered Student & Mentor Network</span>
+                            <FiCode className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                            <span>Student-Driven Project Building & Mentorship Platform</span>
                         </motion.div>
 
                         <motion.h1
@@ -170,9 +170,9 @@ export default function LandingPage() {
                             transition={{ duration: 0.5, delay: 0.1 }}
                             className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-8"
                         >
-                            Where Students & Mentors <br />
+                            Build Something Real. <br />
                             <span className="bg-gradient-to-r from-violet-600 via-indigo-500 to-cyan-500 bg-clip-text text-transparent">
-                                Build Real Projects Together
+                                Ship With Your Squad & Mentors.
                             </span>
                         </motion.h1>
 
@@ -182,8 +182,8 @@ export default function LandingPage() {
                             transition={{ duration: 0.5, delay: 0.2 }}
                             className="text-lg sm:text-xl text-slate-600 dark:text-slate-300 mb-10 leading-relaxed max-w-3xl mx-auto"
                         >
-                            SquadUp connects ambitious student developers, designers, and creators with industry mentors.
-                            Form collaborative project squads, track agile milestones, and showcase verified work.
+                            SquadUp is where student developers, designers, and creators turn ideas into production-ready software.
+                            Form collaborative squads, get 1-on-1 expert mentor help when blocked, and build a verified portfolio.
                         </motion.p>
 
                         <motion.div

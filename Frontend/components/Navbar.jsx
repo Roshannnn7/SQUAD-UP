@@ -45,10 +45,10 @@ export default function Navbar() {
 
     const navLinks = [
         { name: 'Dashboard', href: getDashboardHref(), icon: <FiHome /> },
-        { name: 'Messages', href: '/messages', icon: <FiMessageSquare /> },
         { name: 'Squads', href: '/squads', icon: <FiUsers /> },
-        { name: 'Students', href: '/directory', icon: <FiUsers /> },
         { name: 'Mentors', href: '/mentors', icon: <FiBookOpen /> },
+        { name: 'My Sessions', href: '/bookings', icon: <FiCalendar /> },
+        { name: 'Collaborators', href: '/directory', icon: <FiUsers /> },
         { name: 'Leaderboard', href: '/leaderboard', icon: <FiTrendingUp /> },
     ];
 

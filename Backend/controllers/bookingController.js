@@ -10,7 +10,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // @route   POST /api/bookings
 // @access  Private
 const createBooking = asyncHandler(async (req, res) => {
-    const { mentorId, availabilityId, scheduledDate, mode, notes } = req.body;
+    const { mentorId, availabilityId, scheduledDate, mode, notes, projectId, problemStatement } = req.body;
 
     // Get mentor
     const mentor = await User.findById(mentorId);
@@ -71,7 +71,9 @@ const createBooking = asyncHandler(async (req, res) => {
         duration,
         mode,
         price,
-        notes
+        notes,
+        project: projectId || undefined,
+        problemStatement: problemStatement || notes
     });
 
     // Create notification for mentor
@@ -116,6 +118,7 @@ const getBookings = asyncHandler(async (req, res) => {
             req.user.role === 'student' ? 'mentor' : 'student',
             'fullName profilePhoto email'
         )
+        .populate('project', 'name category skillsRequired status githubRepo')
         .sort({ scheduledDate: 1 });
 
     res.json(bookings);
@@ -127,7 +130,8 @@ const getBookings = asyncHandler(async (req, res) => {
 const getBookingById = asyncHandler(async (req, res) => {
     const booking = await Booking.findById(req.params.id)
         .populate('student', 'fullName profilePhoto email')
-        .populate('mentor', 'fullName profilePhoto email');
+        .populate('mentor', 'fullName profilePhoto email')
+        .populate('project', 'name category skillsRequired status githubRepo');
 
     if (!booking) {
         res.status(404);

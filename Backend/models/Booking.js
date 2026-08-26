@@ -61,6 +61,14 @@ const bookingSchema = mongoose.Schema(
         notes: {
             type: String,
         },
+        project: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Project',
+        },
+        problemStatement: {
+            type: String,
+            trim: true,
+        },
         rating: {
             type: Number,
             min: 0,
