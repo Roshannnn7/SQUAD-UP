@@ -49,6 +49,14 @@ const createRefreshToken = async (userId, req) => {
     return rawToken;
 };
 
+const sanitizePhotoUrl = (url, fallbackName = 'User') => {
+    if (!url) return '';
+    if (typeof url === 'string' && (url.includes('firebasestorage.googleapis.com') || url.includes('firebasestorage.app'))) {
+        return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fallbackName)}`;
+    }
+    return url;
+};
+
 /**
  * Build the standard auth response payload (never includes password).
  */
@@ -58,7 +66,7 @@ const buildAuthResponse = (user, accessToken, refreshToken, extraFields = {}) =>
     fullName:          user.fullName,
     username:          user.username,
     role:              user.role,
-    profilePhoto:      user.profilePhoto || user.avatarUrl || '',
+    profilePhoto:      sanitizePhotoUrl(user.profilePhoto || user.avatarUrl, user.fullName),
     avatarUrl:         user.avatarUrl || '',
     college:           user.college || '',
     program:           user.program || '',
@@ -468,7 +476,10 @@ const getMe = asyncHandler(async (req, res) => {
         profile = await MentorProfile.findOne({ user: user._id }).populate('availability');
     }
 
-    res.json({ ...user.toObject(), profile });
+    const userObj = user.toObject();
+    userObj.profilePhoto = sanitizePhotoUrl(userObj.profilePhoto, userObj.fullName);
+
+    res.json({ ...userObj, profile });
 });
 
 // ─────────────────────────────────────────────
