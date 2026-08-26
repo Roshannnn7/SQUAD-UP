@@ -155,20 +155,44 @@ function ProfileContent() {
         if (!file) return;
         try {
             setUploading(true);
-            const storageRef = ref(storage, `profile-photos/${user._id}_${Date.now()}`);
-            const uploadTask = uploadBytesResumable(storageRef, file);
-            uploadTask.on('state_changed', null,
-                () => { toast.error('Upload failed'); setUploading(false); },
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    setFormData(prev => ({ ...prev, profilePhoto: downloadURL, avatarUrl: '' }));
-                    await api.put('/auth/profile', { profilePhoto: downloadURL, avatarUrl: '' });
-                    toast.success('Photo updated!');
-                    setUploading(false);
-                    fetchProfile();
-                }
-            );
-        } catch { setUploading(false); }
+
+            const getBase64 = (f) => new Promise((res) => {
+                const reader = new FileReader();
+                reader.onloadend = () => res(reader.result);
+                reader.readAsDataURL(f);
+            });
+
+            let finalPhotoUrl = '';
+
+            try {
+                const storageRef = ref(storage, `profile-photos/${user._id}_${Date.now()}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                finalPhotoUrl = await new Promise((resolve, reject) => {
+                    uploadTask.on(
+                        'state_changed',
+                        null,
+                        (err) => reject(err),
+                        async () => {
+                            const url = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(url);
+                        }
+                    );
+                });
+            } catch (fbErr) {
+                console.warn('Firebase Storage upload blocked by CORS or unavailable — using Data URL fallback:', fbErr.message);
+                finalPhotoUrl = await getBase64(file);
+            }
+
+            setFormData(prev => ({ ...prev, profilePhoto: finalPhotoUrl, avatarUrl: '' }));
+            await api.put('/auth/profile', { profilePhoto: finalPhotoUrl, avatarUrl: '' });
+            toast.success('Photo updated!');
+            setUploading(false);
+            fetchProfile();
+        } catch (err) {
+            console.error('Image upload error:', err);
+            toast.error('Failed to update photo');
+            setUploading(false);
+        }
     };
 
     const handleAvatarSelect = (url) => {
@@ -238,7 +262,15 @@ function ProfileContent() {
                             {/* Avatar */}
                             <div className="relative w-fit">
                                 <div className="w-28 h-28 rounded-2xl border-4 border-gray-950 overflow-hidden bg-violet-900 shadow-2xl">
-                                    <img src={displayPhoto} alt={formData.fullName} className="w-full h-full object-cover" />
+                                    <img
+                                        src={displayPhoto}
+                                        alt={formData.fullName}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(formData.fullName || 'User')}`;
+                                        }}
+                                    />
                                 </div>
                                 <label
                                     htmlFor="photo-upload"

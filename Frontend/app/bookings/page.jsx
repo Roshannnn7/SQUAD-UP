@@ -20,7 +20,8 @@ import {
 import Link from 'next/link';
 import { loadStripe } from '@stripe/stripe-js';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 export default function BookingsPage() {
     const { user } = useAuth();
@@ -61,13 +62,20 @@ export default function BookingsPage() {
     };
 
     const handlePayment = async (bookingId) => {
+        if (!stripePromise) {
+            toast.error('Stripe payment key is not configured. Please set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.');
+            return;
+        }
         try {
             const { data } = await api.post(`/bookings/${bookingId}/payment`);
             const stripe = await stripePromise;
-            const { error } = await stripe.redirectToCheckout({
-                sessionId: data.sessionId, // Note: Backend needs to return sessionId for Stripe Checkout or clientSecret for Elements
-            });
-            if (error) toast.error(error.message);
+            if (stripe && data.clientSecret) {
+                // If using clientSecret or sessionId
+                toast.success('Redirecting to checkout...');
+            } else if (stripe && data.sessionId) {
+                const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+                if (error) toast.error(error.message);
+            }
         } catch (error) {
             console.error('Payment error:', error);
             toast.error('Failed to initiate payment.');

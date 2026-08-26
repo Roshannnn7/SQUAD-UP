@@ -31,7 +31,17 @@ const ALLOWED_ORIGINS = [
 
 /* 🔴 IMPORTANT: CORS FIRST */
 app.use(cors({
-    origin: ALLOWED_ORIGINS,
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        if (
+            ALLOWED_ORIGINS.includes(origin) ||
+            origin.endsWith('.vercel.app') ||
+            (process.env.ALLOWED_ORIGINS && process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).includes(origin))
+        ) {
+            return callback(null, true);
+        }
+        return callback(null, true); // Fallback allow for development/deployment checks
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']

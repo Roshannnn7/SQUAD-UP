@@ -122,18 +122,42 @@ export default function SettingsPage() {
         if (!file) return;
         try {
             setUploading(true);
-            const storageRef = ref(storage, `profile-photos/${user._id}_${Date.now()}`);
-            const uploadTask = uploadBytesResumable(storageRef, file);
-            uploadTask.on('state_changed', null,
-                () => { toast.error('Upload failed'); setUploading(false); },
-                async () => {
-                    const url = await getDownloadURL(uploadTask.snapshot.ref);
-                    setForm(prev => ({ ...prev, profilePhoto: url, avatarUrl: '' }));
-                    toast.success('Photo ready — click Save to apply.');
-                    setUploading(false);
-                }
-            );
-        } catch { setUploading(false); }
+
+            const getBase64 = (f) => new Promise((res) => {
+                const reader = new FileReader();
+                reader.onloadend = () => res(reader.result);
+                reader.readAsDataURL(f);
+            });
+
+            let finalUrl = '';
+
+            try {
+                const storageRef = ref(storage, `profile-photos/${user._id}_${Date.now()}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                finalUrl = await new Promise((resolve, reject) => {
+                    uploadTask.on(
+                        'state_changed',
+                        null,
+                        (err) => reject(err),
+                        async () => {
+                            const url = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(url);
+                        }
+                    );
+                });
+            } catch (fbErr) {
+                console.warn('Firebase Storage upload blocked by CORS — using Data URL fallback:', fbErr.message);
+                finalUrl = await getBase64(file);
+            }
+
+            setForm(prev => ({ ...prev, profilePhoto: finalUrl, avatarUrl: '' }));
+            toast.success('Photo ready — click Save to apply.');
+            setUploading(false);
+        } catch (err) {
+            console.error('Photo upload error:', err);
+            toast.error('Failed to upload photo');
+            setUploading(false);
+        }
     };
 
     const handleSave = async () => {
@@ -233,7 +257,15 @@ export default function SettingsPage() {
                                     <SectionHeader icon={<FiCamera />} title="Avatar & Photo" />
                                     {/* Current preview */}
                                     <div className="flex items-center gap-5 p-4 bg-white/5 rounded-2xl">
-                                        <img src={displayPhoto} alt="Current avatar" className="w-20 h-20 rounded-2xl object-cover border-2 border-violet-500" />
+                                        <img
+                                            src={displayPhoto}
+                                            alt="Current avatar"
+                                            className="w-20 h-20 rounded-2xl object-cover border-2 border-violet-500"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.fullName || 'User')}`;
+                                            }}
+                                        />
                                         <div>
                                             <p className="font-semibold text-white text-sm mb-1">Current Avatar</p>
                                             <p className="text-xs text-gray-400">Select a preset below or upload your own photo.</p>
