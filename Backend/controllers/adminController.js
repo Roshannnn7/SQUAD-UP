@@ -291,14 +291,19 @@ const deleteUser = asyncHandler(async (req, res) => {
         }
     );
 
+    // Lookup mentor profile first so we can cascade delete availability slots
+    const mentorProfile = await MentorProfile.findOne({ user: user._id });
+    if (mentorProfile) {
+        await Availability.deleteMany({ mentor: mentorProfile._id });
+        await mentorProfile.deleteOne();
+    }
+
     // Delete all user-related data
     await Promise.all([
-        MentorProfile.deleteOne({ user: user._id }),
         StudentProfile.deleteOne({ user: user._id }),
         Booking.deleteMany({ $or: [{ student: user._id }, { mentor: user._id }] }),
         Notification.deleteMany({ $or: [{ user: user._id }, { sender: user._id }] }),
-        VideoCall.deleteMany({ $or: [{ caller: user._id }, { receiver: user._id }] }),
-        Availability.deleteMany({ mentor: user._id }),
+        VideoCall.deleteMany({ $or: [{ initiator: user._id }, { receiver: user._id }] }),
         JoinRequest.deleteMany({ user: user._id }),
         SquadActivityLog.deleteMany({ user: user._id }),
         SquadRule.deleteMany({ createdBy: user._id }),

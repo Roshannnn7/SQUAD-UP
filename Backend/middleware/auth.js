@@ -2,10 +2,60 @@ const jwt          = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User         = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
+const firebaseAdmin = require('../config/firebase');
 const logger       = require('../utils/logger');
 
 /**
- * protect — Verifies Bearer access token and attaches req.user
+ * Helper to resolve user from token (JWT or Firebase ID Token)
+ */
+const resolveUserFromToken = async (token) => {
+    if (!token) return null;
+
+    const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
+    let user = null;
+
+    // 1. Try verifying as backend-issued JWT
+    try {
+        const decoded = jwt.verify(token, secret);
+        if (decoded && decoded.id) {
+            user = await User.findById(decoded.id).select('-password');
+            if (user) return user;
+        }
+    } catch (jwtErr) {
+        // If JWT verify fails, fall through to Firebase
+    }
+
+    // 2. Try verifying as Firebase ID token
+    if (firebaseAdmin && firebaseAdmin.apps && firebaseAdmin.apps.length > 0) {
+        try {
+            const decodedFb = await firebaseAdmin.auth().verifyIdToken(token);
+            if (decodedFb) {
+                const query = [];
+                if (decodedFb.uid) query.push({ firebaseUid: decodedFb.uid });
+                if (decodedFb.email) query.push({ email: decodedFb.email });
+
+                if (query.length > 0) {
+                    user = await User.findOne({ $or: query }).select('-password');
+                    if (user) {
+                        // Ensure firebaseUid is linked if missing
+                        if (decodedFb.uid && !user.firebaseUid) {
+                            user.firebaseUid = decodedFb.uid;
+                            await user.save();
+                        }
+                        return user;
+                    }
+                }
+            }
+        } catch (fbErr) {
+            // Both JWT and Firebase verification failed
+        }
+    }
+
+    return null;
+};
+
+/**
+ * protect — Verifies Bearer access token (JWT or Firebase) and attaches req.user
  */
 const protect = asyncHandler(async (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -15,22 +65,17 @@ const protect = asyncHandler(async (req, res, next) => {
         throw new Error('Not authorized — no token');
     }
 
-    const token  = authHeader.split(' ')[1];
-    const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
-
-    let decoded;
-    try {
-        decoded = jwt.verify(token, secret);
-    } catch (err) {
+    const token = authHeader.split(' ')[1];
+    if (!token) {
         res.status(401);
-        throw new Error('Not authorized — token invalid or expired');
+        throw new Error('Not authorized — token missing');
     }
 
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await resolveUserFromToken(token);
 
     if (!user) {
         res.status(401);
-        throw new Error('Not authorized — user not found');
+        throw new Error('Not authorized — token invalid or expired');
     }
 
     if (!user.isActive) {
@@ -52,12 +97,13 @@ const optionalAuth = asyncHandler(async (req, res, next) => {
         return next();
     }
 
-    const token  = authHeader.split(' ')[1];
-    const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+        return next();
+    }
 
     try {
-        const decoded = jwt.verify(token, secret);
-        const user    = await User.findById(decoded.id).select('-password');
+        const user = await resolveUserFromToken(token);
         if (user && user.isActive) {
             req.user = user;
         }

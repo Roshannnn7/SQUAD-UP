@@ -56,6 +56,15 @@ const getMentorById = asyncHandler(async (req, res) => {
         throw new Error('Mentor not found');
     }
 
+    // CRITICAL FIX: Filter out null/undefined availability entries.
+    // When an Availability doc is deleted but its ObjectId ref remains in
+    // MentorProfile.availability, populate() returns null for that entry.
+    // Accessing null.startTime causes the "Cannot read properties of undefined" crash.
+    const mentorObj = mentor.toObject();
+    mentorObj.availability = (mentorObj.availability || []).filter(
+        (slot) => slot != null && slot.startTime && slot.endTime
+    );
+
     // Get mentor's upcoming sessions
     const upcomingSessions = await Booking.find({
         mentor: mentor.user._id,
@@ -64,7 +73,7 @@ const getMentorById = asyncHandler(async (req, res) => {
     }).populate('student', 'fullName profilePhoto');
 
     res.json({
-        ...mentor.toObject(),
+        ...mentorObj,
         upcomingSessions
     });
 });
@@ -94,6 +103,30 @@ const getMentorAvailability = asyncHandler(async (req, res) => {
 const addAvailability = asyncHandler(async (req, res) => {
     const { dayOfWeek, startTime, endTime, isRecurring, specificDate } = req.body;
 
+    // ── Validate dayOfWeek ──────────────────────────────────────────
+    const dayNum = Number(dayOfWeek);
+    if (dayOfWeek === undefined || dayOfWeek === null || isNaN(dayNum) || !Number.isInteger(dayNum) || dayNum < 0 || dayNum > 6) {
+        res.status(400);
+        throw new Error('dayOfWeek must be an integer between 0 (Sunday) and 6 (Saturday)');
+    }
+
+    // ── Validate time format (HH:mm) ───────────────────────────────
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (!startTime || !timeRegex.test(startTime)) {
+        res.status(400);
+        throw new Error('startTime must be a valid time in HH:mm format');
+    }
+    if (!endTime || !timeRegex.test(endTime)) {
+        res.status(400);
+        throw new Error('endTime must be a valid time in HH:mm format');
+    }
+
+    // ── Validate startTime < endTime ────────────────────────────────
+    if (startTime >= endTime) {
+        res.status(400);
+        throw new Error('startTime must be earlier than endTime');
+    }
+
     const mentorProfile = await MentorProfile.findOne({ user: req.user._id });
 
     if (!mentorProfile) {
@@ -104,7 +137,7 @@ const addAvailability = asyncHandler(async (req, res) => {
     // Check for overlapping slots
     const overlappingSlot = await Availability.findOne({
         mentor: mentorProfile._id,
-        dayOfWeek,
+        dayOfWeek: dayNum,
         startTime: { $lt: endTime },
         endTime: { $gt: startTime },
         isAvailable: true
@@ -117,7 +150,7 @@ const addAvailability = asyncHandler(async (req, res) => {
 
     const availability = await Availability.create({
         mentor: mentorProfile._id,
-        dayOfWeek,
+        dayOfWeek: dayNum,
         startTime,
         endTime,
         isRecurring,
@@ -149,10 +182,57 @@ const updateAvailability = asyncHandler(async (req, res) => {
         throw new Error('Not authorized to update this slot');
     }
 
+    // Build validated update object — only allow known fields
+    const updateFields = {};
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+    if (req.body.dayOfWeek !== undefined) {
+        const dayNum = Number(req.body.dayOfWeek);
+        if (isNaN(dayNum) || !Number.isInteger(dayNum) || dayNum < 0 || dayNum > 6) {
+            res.status(400);
+            throw new Error('dayOfWeek must be an integer between 0 (Sunday) and 6 (Saturday)');
+        }
+        updateFields.dayOfWeek = dayNum;
+    }
+
+    if (req.body.startTime !== undefined) {
+        if (!timeRegex.test(req.body.startTime)) {
+            res.status(400);
+            throw new Error('startTime must be a valid time in HH:mm format');
+        }
+        updateFields.startTime = req.body.startTime;
+    }
+
+    if (req.body.endTime !== undefined) {
+        if (!timeRegex.test(req.body.endTime)) {
+            res.status(400);
+            throw new Error('endTime must be a valid time in HH:mm format');
+        }
+        updateFields.endTime = req.body.endTime;
+    }
+
+    // Validate startTime < endTime using the final values
+    const finalStart = updateFields.startTime || availability.startTime;
+    const finalEnd = updateFields.endTime || availability.endTime;
+    if (finalStart >= finalEnd) {
+        res.status(400);
+        throw new Error('startTime must be earlier than endTime');
+    }
+
+    if (req.body.isRecurring !== undefined) {
+        updateFields.isRecurring = req.body.isRecurring;
+    }
+    if (req.body.specificDate !== undefined) {
+        updateFields.specificDate = req.body.specificDate;
+    }
+    if (req.body.isAvailable !== undefined) {
+        updateFields.isAvailable = req.body.isAvailable;
+    }
+
     const updatedAvailability = await Availability.findByIdAndUpdate(
         req.params.id,
-        req.body,
-        { new: true }
+        updateFields,
+        { new: true, runValidators: true }
     );
 
     res.json(updatedAvailability);

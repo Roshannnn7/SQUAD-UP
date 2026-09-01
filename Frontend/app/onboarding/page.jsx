@@ -110,7 +110,8 @@ export default function OnboardingPage() {
             router.push('/dashboard/student');
         } catch (error) {
             console.error('Student profile error:', error);
-            toast.error('Failed to complete profile. Please check required fields.');
+            const msg = error.response?.data?.message || 'Failed to complete profile. Please check required fields.';
+            toast.error(msg);
         } finally {
             setIsLoading(false);
         }
@@ -124,10 +125,10 @@ export default function OnboardingPage() {
             const payload = {
                 currentRole: mentorForm.currentRole,
                 company: mentorForm.company,
-                experience: mentorForm.experienceYears,
-                expertise: mentorForm.expertise,
-                bio: mentorForm.bio,
-                sessionPrice: mentorForm.pricePerHour,
+                experience: mentorForm.experienceYears || '1',
+                expertise: mentorForm.expertise || 'Software Engineering',
+                bio: mentorForm.bio || '',
+                sessionPrice: Number(mentorForm.pricePerHour) || 0,
                 mode: ['video', 'chat'],
             };
 
@@ -137,7 +138,8 @@ export default function OnboardingPage() {
             router.push('/dashboard/mentor');
         } catch (error) {
             console.error('Mentor profile error:', error);
-            toast.error('Failed to complete profile. Please check required fields.');
+            const msg = error.response?.data?.message || 'Failed to complete profile. Please check required fields.';
+            toast.error(msg);
         } finally {
             setIsLoading(false);
         }

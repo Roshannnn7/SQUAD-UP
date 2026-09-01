@@ -7,9 +7,13 @@ const Notification = require('../models/Notification');
 const getNotifications = asyncHandler(async (req, res) => {
     const notifications = await Notification.find({ user: req.user._id })
         .sort({ createdAt: -1 })
-        .limit(50);
+        .limit(50)
+        .populate('sender', 'fullName profilePhoto');
 
-    res.json(notifications);
+    res.json({
+        success: true,
+        notifications,
+    });
 });
 
 // @desc    Mark notification as read

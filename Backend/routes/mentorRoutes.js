@@ -13,6 +13,12 @@ const {
 const { protect, mentor } = require('../middleware/auth');
 
 router.get('/', getMentors);
+
+// ⚠️ Specific literal routes MUST come before /:id wildcard
+// Otherwise Express matches "dashboard" or "availability" as :id
+router.get('/dashboard/stats', protect, mentor, getMentorStats);
+router.get('/availability/me', protect, mentor, getMyAvailability);
+
 router.get('/:id', getMentorById);
 router.get('/:id/availability', getMentorAvailability);
 
@@ -20,7 +26,5 @@ router.get('/:id/availability', getMentorAvailability);
 router.post('/availability', protect, mentor, addAvailability);
 router.put('/availability/:id', protect, mentor, updateAvailability);
 router.delete('/availability/:id', protect, mentor, deleteAvailability);
-router.get('/dashboard/stats', protect, mentor, getMentorStats);
-router.get('/availability/me', protect, mentor, getMyAvailability);
 
 module.exports = router;

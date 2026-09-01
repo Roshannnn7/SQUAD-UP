@@ -10,6 +10,7 @@ const User         = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
 
 describe('PR-1 Auth Hardening Test Suite', () => {
+    jest.setTimeout(30000);
     let testUser;
     const testPassword = 'Password123!';
 

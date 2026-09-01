@@ -223,6 +223,13 @@ const verifyFirebaseToken = asyncHandler(async (req, res) => {
             profile = await StudentProfile.findOne({ user: user._id });
         } else if (user.role === 'mentor') {
             profile = await MentorProfile.findOne({ user: user._id }).populate('availability');
+            if (profile) {
+                const profileObj = profile.toObject();
+                profileObj.availability = (profileObj.availability || []).filter(
+                    (slot) => slot != null && slot.startTime && slot.endTime
+                );
+                profile = profileObj;
+            }
         }
 
         const accessToken  = generateAccessToken(user._id);
@@ -474,6 +481,14 @@ const getMe = asyncHandler(async (req, res) => {
         profile = await StudentProfile.findOne({ user: user._id });
     } else if (user.role === 'mentor') {
         profile = await MentorProfile.findOne({ user: user._id }).populate('availability');
+        // Filter out null/orphaned availability entries (same fix as getMentorById)
+        if (profile) {
+            const profileObj = profile.toObject();
+            profileObj.availability = (profileObj.availability || []).filter(
+                (slot) => slot != null && slot.startTime && slot.endTime
+            );
+            profile = profileObj;
+        }
     }
 
     const userObj = user.toObject();

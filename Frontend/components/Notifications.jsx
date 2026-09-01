@@ -34,13 +34,19 @@ export default function Notifications() {
             ]);
 
             if (res.status === 'fulfilled' && res.value?.data) {
-                setNotifications(res.value.data);
+                // Handle both { notifications: [...] } and bare array responses
+                const data = res.value.data;
+                const items = Array.isArray(data) ? data : (data.notifications || []);
+                setNotifications(items);
             }
             if (unread.status === 'fulfilled' && unread.value?.data) {
                 setUnreadCount(unread.value.data.count || 0);
             }
         } catch (error) {
-            console.warn('Fetch notifications notice:', error.message);
+            // Silently handle — notification failures should not disrupt UX
+            if (error.response?.status !== 401) {
+                console.warn('Fetch notifications notice:', error.message);
+            }
         }
     };
 

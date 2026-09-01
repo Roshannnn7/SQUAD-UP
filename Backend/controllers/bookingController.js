@@ -34,7 +34,7 @@ const createBooking = asyncHandler(async (req, res) => {
 
     // Check if mentor owns this slot
     const mentorProfile = await MentorProfile.findOne({ user: mentorId });
-    if (!mentorProfile.availability.includes(availabilityId)) {
+    if (!mentorProfile || !mentorProfile.availability.some(id => id.toString() === availabilityId.toString())) {
         res.status(400);
         throw new Error('Invalid availability slot');
     }
@@ -58,7 +58,7 @@ const createBooking = asyncHandler(async (req, res) => {
 
     const duration = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
     const hours = duration / 60;
-    const price = hours * mentorProfile.sessionPrice;
+    const price = hours * (mentorProfile.sessionPrice || 0);
 
     // Create booking
     const booking = await Booking.create({
@@ -83,7 +83,7 @@ const createBooking = asyncHandler(async (req, res) => {
         message: `${req.user.fullName} requested a ${mode} session`,
         type: 'booking',
         relatedId: booking._id,
-        actionUrl: `/mentor/bookings/${booking._id}`
+        actionUrl: `/bookings`
     });
 
     res.status(201).json(booking);
@@ -186,8 +186,8 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
             isAvailable: false
         });
 
-        // Generate meeting link (in production, use actual video conferencing service)
-        booking.meetingLink = `https://squadup.video/${booking._id}`;
+        // Generate real internal WebRTC meeting link
+        booking.meetingLink = `/video-call/${booking._id}`;
     }
 
     await booking.save();
@@ -199,7 +199,7 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
         message: `Your session with ${req.user.fullName} has been ${status}`,
         type: 'booking',
         relatedId: booking._id,
-        actionUrl: `/bookings/${booking._id}`
+        actionUrl: `/bookings`
     });
 
     res.json(booking);

@@ -130,7 +130,7 @@ app.use(errorHandler);
 app.use('*', (req, res) => res.status(404).json({ message: 'Endpoint not found' }));
 
 const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.JEST_WORKER_ID) {
     server.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });

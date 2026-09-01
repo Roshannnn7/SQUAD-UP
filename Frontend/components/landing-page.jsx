@@ -318,7 +318,7 @@ export default function LandingPage() {
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex items-center justify-between">
-                                                <h5 className="font-bold text-slate-900 dark:text-white">Alex's Daily Check-in</h5>
+                                                <h5 className="font-bold text-slate-900 dark:text-white">Alex&apos;s Daily Check-in</h5>
                                                 <span className="text-xs text-slate-400">Today, 9:30 AM</span>
                                             </div>
                                             <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">Completed Auth middleware integration. Working on Socket.io WebRTC handshake today.</p>
@@ -583,7 +583,7 @@ export default function LandingPage() {
                                 className="p-8 rounded-3xl bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 shadow-sm flex flex-col justify-between"
                             >
                                 <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed mb-8 italic">
-                                    "{testimonial.content}"
+                                    &ldquo;{testimonial.content}&rdquo;
                                 </p>
                                 <div className="flex items-center gap-4 pt-6 border-t border-slate-100 dark:border-gray-800">
                                     <img
@@ -628,7 +628,7 @@ export default function LandingPage() {
                             <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Meet Roshan Rathod</h2>
                             <p className="text-slate-500 dark:text-gray-400 font-semibold text-sm mb-4">BCA Student & Founder of SquadUp</p>
                             <p className="text-slate-600 dark:text-slate-300 text-base leading-relaxed mb-6 max-w-2xl">
-                                "SquadUp was born from a simple need: helping fellow computer science students find reliable teammates and guidance. Today, it bridges the gap between learning to code and shipping real-world software together."
+                                &ldquo;SquadUp was born from a simple need: helping fellow computer science students find reliable teammates and guidance. Today, it bridges the gap between learning to code and shipping real-world software together.&rdquo;
                             </p>
                             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
                                 <Link 

@@ -22,6 +22,24 @@ import {
     FiGlobe
 } from 'react-icons/fi';
 
+// Canonical day-of-week mapping (matches JS Date.getDay() and the Mongoose schema min:0 max:6)
+const DAY_MAP = [
+    { value: 0, label: 'Sunday' },
+    { value: 1, label: 'Monday' },
+    { value: 2, label: 'Tuesday' },
+    { value: 3, label: 'Wednesday' },
+    { value: 4, label: 'Thursday' },
+    { value: 5, label: 'Friday' },
+    { value: 6, label: 'Saturday' },
+];
+
+/** Convert a numeric dayOfWeek (0-6) to a human-readable label */
+const getDayLabel = (dayOfWeek) => {
+    const entry = DAY_MAP.find(d => d.value === Number(dayOfWeek));
+    return entry ? entry.label : `Day ${dayOfWeek}`;
+};
+
+
 export default function MentorProfilePage() {
     const { id } = useParams();
     const router = useRouter();
@@ -364,8 +382,8 @@ export default function MentorProfilePage() {
                                             Select available time slot
                                         </label>
                                         <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2">
-                                            {mentor.availability && mentor.availability.length > 0 ? (
-                                                mentor.availability.map((slot) => (
+                                            {mentor.availability && mentor.availability.filter(s => s != null).length > 0 ? (
+                                                mentor.availability.filter(s => s != null).map((slot) => (
                                                     <button
                                                         key={slot._id}
                                                         onClick={() => setSelectedSlot(slot)}
@@ -374,8 +392,8 @@ export default function MentorProfilePage() {
                                                                 : 'border-gray-100 bg-gray-50 hover:border-primary-200'
                                                             }`}
                                                     >
-                                                        <span className="text-sm font-bold uppercase">{slot.dayOfWeek || 'Next Slot'}</span>
-                                                        <span className="text-xs">{slot.startTime} - {slot.endTime}</span>
+                                                        <span className="text-sm font-bold uppercase">{slot.dayOfWeek !== undefined && slot.dayOfWeek !== null ? getDayLabel(slot.dayOfWeek) : 'Next Slot'}</span>
+                                                        <span className="text-xs">{slot.startTime || '—'} - {slot.endTime || '—'}</span>
                                                     </button>
                                                 ))
                                             ) : (

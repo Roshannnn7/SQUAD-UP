@@ -159,7 +159,7 @@ export default function BookingsPage() {
 
                                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                                             <span className="flex items-center gap-1"><FiCalendar className="text-primary-500" /> {new Date(booking.scheduledDate).toLocaleDateString()}</span>
-                                            <span className="flex items-center gap-1"><FiClock className="text-primary-500" /> {booking.startTime} - {booking.endTime}</span>
+                                            <span className="flex items-center gap-1"><FiClock className="text-primary-500" /> {booking.startTime || '—'} - {booking.endTime || '—'}</span>
                                             <span className="flex items-center gap-1 font-bold text-gray-900 dark:text-white">₹{booking.price}</span>
                                         </div>
                                     </div>

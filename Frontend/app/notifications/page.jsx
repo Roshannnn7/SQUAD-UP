@@ -20,9 +20,14 @@ export default function NotificationsPage() {
         try {
             setLoading(true);
             const res = await api.get('/notifications');
-            setNotifications(res.data);
+            // Handle both { notifications: [...] } and bare array responses
+            const data = res.data;
+            const items = Array.isArray(data) ? data : (data.notifications || []);
+            setNotifications(items);
         } catch (error) {
-            console.error('Fetch error:', error);
+            if (error.response?.status !== 401) {
+                console.error('Fetch error:', error);
+            }
         } finally {
             setLoading(false);
         }

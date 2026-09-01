@@ -8,17 +8,32 @@ import toast from 'react-hot-toast';
 import { FiPlus, FiTrash2, FiClock, FiCalendar, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
 
+// Canonical day-of-week mapping (matches JS Date.getDay() and the Mongoose schema min:0 max:6)
+const DAY_MAP = [
+    { value: 0, label: 'Sunday' },
+    { value: 1, label: 'Monday' },
+    { value: 2, label: 'Tuesday' },
+    { value: 3, label: 'Wednesday' },
+    { value: 4, label: 'Thursday' },
+    { value: 5, label: 'Friday' },
+    { value: 6, label: 'Saturday' },
+];
+
+/** Convert a numeric dayOfWeek (0-6) to a human-readable label */
+const getDayLabel = (dayOfWeek) => {
+    const entry = DAY_MAP.find(d => d.value === Number(dayOfWeek));
+    return entry ? entry.label : `Day ${dayOfWeek}`;
+};
+
 export default function AvailabilityPage() {
     const [availability, setAvailability] = useState([]);
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
-        dayOfWeek: 'Monday',
+        dayOfWeek: 1, // Monday (numeric)
         startTime: '09:00',
         endTime: '10:00',
         isRecurring: true,
     });
-
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     useEffect(() => {
         fetchAvailability();
@@ -27,13 +42,11 @@ export default function AvailabilityPage() {
     const fetchAvailability = async () => {
         try {
             setLoading(true);
-            // We need a route for mentor's own availability. 
-            // mentorController has addAvailability which uses req.user._id.
-            // Let's assume there's a route for getting own availability.
             const res = await api.get('/mentors/availability/me');
-            setAvailability(res.data);
+            setAvailability(Array.isArray(res.data) ? res.data.filter(Boolean) : []);
         } catch (error) {
             console.error('Fetch error:', error);
+            setAvailability([]);
         } finally {
             setLoading(false);
         }
@@ -41,12 +54,32 @@ export default function AvailabilityPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Client-side validation: startTime must be before endTime
+        if (formData.startTime >= formData.endTime) {
+            toast.error('Start time must be earlier than end time.');
+            return;
+        }
+
         try {
-            const res = await api.post('/mentors/availability', formData);
+            const res = await api.post('/mentors/availability', {
+                dayOfWeek: Number(formData.dayOfWeek),
+                startTime: formData.startTime,
+                endTime: formData.endTime,
+                isRecurring: formData.isRecurring,
+            });
             setAvailability([...availability, res.data]);
             toast.success('Slot added!');
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to add slot.');
+            const msg = error.response?.data?.message;
+            // Show user-friendly messages instead of raw Mongoose errors
+            if (msg && msg.includes('Overlapping')) {
+                toast.error('This time slot overlaps with an existing one.');
+            } else if (msg) {
+                toast.error(msg);
+            } else {
+                toast.error('We couldn\'t save this availability slot. Please try again.');
+            }
         }
     };
 
@@ -80,9 +113,11 @@ export default function AvailabilityPage() {
                                     <select
                                         className="input-field"
                                         value={formData.dayOfWeek}
-                                        onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
+                                        onChange={(e) => setFormData({ ...formData, dayOfWeek: Number(e.target.value) })}
                                     >
-                                        {days.map(d => <option key={d}>{d}</option>)}
+                                        {DAY_MAP.map(d => (
+                                            <option key={d.value} value={d.value}>{d.label}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>
@@ -127,10 +162,10 @@ export default function AvailabilityPage() {
 
                         {loading ? (
                             [1, 2, 3].map(i => <div key={i} className="h-20 skeleton rounded-2xl" />)
-                        ) : availability.length > 0 ? (
-                            availability.map((slot) => (
+                        ) : availability.filter(Boolean).length > 0 ? (
+                            availability.filter(Boolean).map((slot) => (
                                 <motion.div
-                                    key={slot._id}
+                                    key={slot._id || Math.random()}
                                     className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between group"
                                 >
                                     <div className="flex items-center space-x-4">
@@ -138,8 +173,8 @@ export default function AvailabilityPage() {
                                             <FiCalendar />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-gray-900 dark:text-white">{slot.dayOfWeek}</h4>
-                                            <span className="text-xs text-gray-500 flex items-center gap-1"><FiClock className="w-3 h-3" /> {slot.startTime} - {slot.endTime}</span>
+                                            <h4 className="font-bold text-gray-900 dark:text-white">{getDayLabel(slot.dayOfWeek)}</h4>
+                                            <span className="text-xs text-gray-500 flex items-center gap-1"><FiClock className="w-3 h-3" /> {slot?.startTime || '—'} - {slot?.endTime || '—'}</span>
                                         </div>
                                     </div>
                                     <button onClick={() => deleteSlot(slot._id)} className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
@@ -158,3 +193,4 @@ export default function AvailabilityPage() {
         </div>
     );
 }
+
