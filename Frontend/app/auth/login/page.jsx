@@ -13,6 +13,7 @@ import { useAuth } from '../../../components/auth-provider';
 import { useTheme } from 'next-themes';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import SquadUpLogo from '../../../components/SquadUpLogo';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -231,10 +232,15 @@ export default function LoginPage() {
                 className="w-full max-w-md"
             >
                 <div className="glassmorphism rounded-2xl p-8 shadow-2xl">
+                    <div className="flex justify-center mb-6">
+                        <Link href="/">
+                            <SquadUpLogo size="lg" showWordmark={true} animated={true} />
+                        </Link>
+                    </div>
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold gradient-text mb-2">Welcome Back</h1>
-                        <p className="text-gray-600 dark:text-gray-300">
-                            Sign in to continue to SquadUp
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Welcome Back</h1>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">
+                            Sign in to collaborate with your squad
                         </p>
                     </div>
 

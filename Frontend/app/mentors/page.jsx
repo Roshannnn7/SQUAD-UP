@@ -114,7 +114,7 @@ export default function MentorsPage() {
                                     </div>
                                     <div className="bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
                                         <FiStar className="fill-current" />
-                                        <span>{mentor.rating || '5.0'}</span>
+                                        <span>{mentor.rating > 0 ? Number(mentor.rating).toFixed(1) : 'New'}</span>
                                     </div>
                                 </div>
 

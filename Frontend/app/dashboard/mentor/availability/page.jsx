@@ -8,6 +8,9 @@ import toast from 'react-hot-toast';
 import { FiPlus, FiTrash2, FiClock, FiCalendar, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
 
+import { useAuth } from '@/components/auth-provider';
+import { useRouter } from 'next/navigation';
+
 // Canonical day-of-week mapping (matches JS Date.getDay() and the Mongoose schema min:0 max:6)
 const DAY_MAP = [
     { value: 0, label: 'Sunday' },
@@ -26,6 +29,8 @@ const getDayLabel = (dayOfWeek) => {
 };
 
 export default function AvailabilityPage() {
+    const { isAuthenticated, isInitialized } = useAuth();
+    const router = useRouter();
     const [availability, setAvailability] = useState([]);
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
@@ -36,8 +41,13 @@ export default function AvailabilityPage() {
     });
 
     useEffect(() => {
+        if (!isInitialized) return;
+        if (!isAuthenticated) {
+            router.replace('/auth/login');
+            return;
+        }
         fetchAvailability();
-    }, []);
+    }, [isInitialized, isAuthenticated]);
 
     const fetchAvailability = async () => {
         try {

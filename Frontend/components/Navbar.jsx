@@ -7,6 +7,7 @@ import { useAuth } from './auth-provider';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import Notifications from './Notifications';
+import SquadUpLogo from './SquadUpLogo';
 import {
     FiHome,
     FiUsers,
@@ -77,15 +78,8 @@ export default function Navbar() {
                 <div className="flex items-center justify-between h-16 sm:h-18">
                     {/* Brand Logo */}
                     <div className="flex items-center gap-3">
-                        <Link href="/" className="group flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-violet-600 to-pink-500 p-[1.5px] shadow-glow-sm transition-transform duration-300 group-hover:scale-105">
-                                <div className="w-full h-full bg-white dark:bg-slate-950 rounded-[10px] flex items-center justify-center">
-                                    <FiZap className="w-5 h-5 text-violet-600 dark:text-violet-400 group-hover:rotate-12 transition-transform duration-300" />
-                                </div>
-                            </div>
-                            <span className="text-xl sm:text-2xl font-black tracking-tight gradient-text">
-                                SquadUp
-                            </span>
+                        <Link href="/" className="group flex items-center">
+                            <SquadUpLogo size="md" showWordmark={true} animated={true} />
                         </Link>
                         {user?.role && (
                             <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">

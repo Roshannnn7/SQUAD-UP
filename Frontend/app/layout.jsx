@@ -12,6 +12,12 @@ const inter = Inter({ subsets: ["latin"] });
 export default function RootLayout({ children }) {
     return (
         <html lang="en" suppressHydrationWarning>
+            <head>
+                <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+                <link rel="alternate icon" href="/favicon.ico" />
+                <title>SquadUp — Student Collaboration & Mentorship Platform</title>
+                <meta name="description" content="Find collaborators, form project squads, connect with verified industry mentors, and ship real projects together." />
+            </head>
             <body className={inter.className}>
                 <ThemeProvider
                     attribute="class"

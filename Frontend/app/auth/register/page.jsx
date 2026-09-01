@@ -11,6 +11,7 @@ import { auth, googleProvider } from '../../../lib/firebase';
 import api from '../../../lib/axios';
 import { useAuth } from '../../../components/auth-provider';
 import toast from 'react-hot-toast';
+import SquadUpLogo from '../../../components/SquadUpLogo';
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -104,12 +105,15 @@ export default function RegisterPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sm:mx-auto sm:w-full sm:max-w-md"
+                className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center"
             >
-                <h2 className="text-center text-3xl font-extrabold gradient-text">
-                    Join SquadUp
+                <Link href="/" className="mb-4">
+                    <SquadUpLogo size="lg" showWordmark={true} animated={true} />
+                </Link>
+                <h2 className="text-center text-2xl font-bold text-slate-900 dark:text-white">
+                    Create your account
                 </h2>
-                <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-1 text-center text-sm text-gray-600 dark:text-gray-400">
                     Start collaborating with students and mentors today
                 </p>
             </motion.div>

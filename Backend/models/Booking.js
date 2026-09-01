@@ -88,7 +88,15 @@ bookingSchema.index({ student: 1 });
 bookingSchema.index({ mentor: 1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ scheduledDate: 1 });
-bookingSchema.index({ 'scheduledDate': 1, 'startTime': 1 });
+bookingSchema.index({ scheduledDate: 1, startTime: 1 });
+// Concurrency double-booking guard: prevent multiple pending/accepted bookings for the same slot
+bookingSchema.index(
+    { mentor: 1, availability: 1, scheduledDate: 1, startTime: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { status: { $in: ['pending', 'accepted'] } },
+    }
+);
 
 const Booking = mongoose.model('Booking', bookingSchema);
 

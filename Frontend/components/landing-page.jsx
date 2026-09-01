@@ -26,6 +26,7 @@ import {
     FiLayers
 } from 'react-icons/fi';
 import { useAuth } from '@/components/auth-provider';
+import SquadUpLogo from '@/components/SquadUpLogo';
 import Link from 'next/link';
 
 const features = [
@@ -101,37 +102,6 @@ const features = [
         description: 'Receive verified skill endorsements from team members and mentors as you complete milestones.',
         badge: null,
     },
-];
-
-const testimonials = [
-    {
-        name: 'Alex Johnson',
-        role: 'Computer Science Student',
-        university: 'Stanford University',
-        content: 'SquadUp helped me transition from isolated tutorial learning to building production-ready projects with real teammates.',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
-    },
-    {
-        name: 'Sarah Chen',
-        role: 'Senior Software Engineer & Mentor',
-        university: 'Tech Mentor at SquadUp',
-        content: 'Guiding student squads through system design and code architecture has been incredibly rewarding. The booking flow is seamless.',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-    },
-    {
-        name: 'Michael Rodriguez',
-        role: 'Project Squad Lead',
-        university: 'UC Berkeley',
-        content: 'The roadmap builder and standup bot kept our 4-person team accountable. We shipped our capstone project two weeks early!',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
-    },
-];
-
-const stats = [
-    { label: 'Active Squads', value: '500+' },
-    { label: 'Mentorship Sessions', value: '1,200+' },
-    { label: 'Projects Shipped', value: '850+' },
-    { label: 'Student Satisfaction', value: '99%' },
 ];
 
 export default function LandingPage() {
@@ -394,21 +364,42 @@ export default function LandingPage() {
                     </motion.div>
                 </div>
             </section>
-
-            {/* Impact Metrics Banner */}
+            {/* Platform Value Pillars Banner */}
             <section className="py-12 bg-white dark:bg-gray-900 border-y border-slate-200/80 dark:border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                        {stats.map((stat, idx) => (
-                            <div key={idx} className="p-4">
-                                <p className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent mb-1">
-                                    {stat.value}
-                                </p>
-                                <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                                    {stat.label}
-                                </p>
-                            </div>
-                        ))}
+                        <div className="p-4">
+                            <p className="text-xl sm:text-2xl font-black bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent mb-1">
+                                Skill Matching
+                            </p>
+                            <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                                Complementary Squad Formation
+                            </p>
+                        </div>
+                        <div className="p-4">
+                            <p className="text-xl sm:text-2xl font-black bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent mb-1">
+                                1-on-1 Mentorship
+                            </p>
+                            <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                                Direct Industry Guidance
+                            </p>
+                        </div>
+                        <div className="p-4">
+                            <p className="text-xl sm:text-2xl font-black bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent mb-1">
+                                Real-Time Hub
+                            </p>
+                            <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                                WebRTC Video, Audio & Screen Share
+                            </p>
+                        </div>
+                        <div className="p-4">
+                            <p className="text-xl sm:text-2xl font-black bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent mb-1">
+                                Verified XP
+                            </p>
+                            <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                                Measurable Skill Growth
+                            </p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -423,7 +414,6 @@ export default function LandingPage() {
                         <p className="text-slate-600 dark:text-slate-300 text-lg">
                             Whether you are looking to build projects or share your experience, SquadUp gives you tailored tools to succeed.
                         </p>
-
                         <div className="inline-flex p-1.5 bg-slate-200 dark:bg-gray-900 rounded-2xl mt-8 border border-slate-300/60 dark:border-gray-800">
                             <button
                                 onClick={() => setRoleTab('students')}
@@ -433,7 +423,7 @@ export default function LandingPage() {
                                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                 }`}
                             >
-                                <FiBookOpen className="w-4 h-4" />
+                                <FiUsers className="w-4 h-4" />
                                 <span>For Students</span>
                             </button>
                             <button
@@ -444,7 +434,7 @@ export default function LandingPage() {
                                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                 }`}
                             >
-                                <FiBriefcase className="w-4 h-4" />
+                                <FiShield className="w-4 h-4" />
                                 <span>For Mentors</span>
                             </button>
                         </div>
@@ -469,7 +459,7 @@ export default function LandingPage() {
                                     </div>
                                     <h3 className="text-xl font-bold mb-3">Verified Portfolio</h3>
                                     <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-                                        Turn your squad contributions into a live public portfolio that highlights real project code, pull requests, and peer ratings.
+                                        Turn your squad contributions into a live public portfolio that highlights real project code, pull requests, and peer endorsements.
                                     </p>
                                 </div>
 
@@ -487,7 +477,7 @@ export default function LandingPage() {
                             <>
                                 <div className="p-8 rounded-3xl bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all">
                                     <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-950/60 flex items-center justify-center text-violet-600 dark:text-violet-400 mb-6">
-                                        <FiBriefcase className="w-6 h-6" />
+                                        <FiShield className="w-6 h-6" />
                                     </div>
                                     <h3 className="text-xl font-bold mb-3">Give Back to Tech</h3>
                                     <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
@@ -555,54 +545,6 @@ export default function LandingPage() {
                                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                                     {feature.description}
                                 </p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Testimonials Section */}
-            <section className="py-24 bg-slate-50 dark:bg-gray-950">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center max-w-3xl mx-auto mb-16">
-                        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-                            Trusted by Students & Engineers
-                        </h2>
-                        <p className="text-slate-600 dark:text-slate-300 text-lg">
-                            See how SquadUp empowers teams to learn, collaborate, and launch real projects.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {testimonials.map((testimonial, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.4, delay: index * 0.1 }}
-                                className="p-8 rounded-3xl bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 shadow-sm flex flex-col justify-between"
-                            >
-                                <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed mb-8 italic">
-                                    &ldquo;{testimonial.content}&rdquo;
-                                </p>
-                                <div className="flex items-center gap-4 pt-6 border-t border-slate-100 dark:border-gray-800">
-                                    <img
-                                        src={testimonial.avatar}
-                                        alt={testimonial.name}
-                                        className="w-12 h-12 rounded-full border border-slate-200 dark:border-gray-700"
-                                    />
-                                    <div>
-                                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                                            {testimonial.name}
-                                        </h4>
-                                        <p className="text-xs text-slate-500 dark:text-gray-400 font-medium">
-                                            {testimonial.role}
-                                        </p>
-                                        <p className="text-xs text-violet-600 dark:text-violet-400 font-semibold">
-                                            {testimonial.university}
-                                        </p>
-                                    </div>
-                                </div>
                             </motion.div>
                         ))}
                     </div>
@@ -680,7 +622,7 @@ export default function LandingPage() {
                         Ready to Build Your Next Big Project?
                     </h2>
                     <p className="text-violet-100 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">
-                        Join hundreds of students and mentors collaborating on active project squads today.
+                        Join students and mentors collaborating on active project squads today.
                     </p>
                     {!isAuthenticated ? (
                         <Link
@@ -709,9 +651,9 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
                         <div>
-                            <span className="text-2xl font-extrabold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent block mb-4">
-                                SquadUp
-                            </span>
+                            <div className="mb-4">
+                                <SquadUpLogo size="md" showWordmark={true} />
+                            </div>
                             <p className="text-sm text-slate-400 leading-relaxed">
                                 Empowering students and mentors through collaborative projects, agile check-ins, and verified skill growth.
                             </p>

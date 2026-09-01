@@ -574,7 +574,7 @@ export default function StudentDashboard() {
 
                                                 <div className="flex items-center text-amber-500 font-extrabold text-xs shrink-0">
                                                     <FiStar className="fill-current mr-0.5 w-3 h-3" />
-                                                    <span>{mentor.rating || 5.0}</span>
+                                                    <span>{mentor.rating > 0 ? Number(mentor.rating).toFixed(1) : 'New'}</span>
                                                 </div>
                                             </Link>
                                         ))

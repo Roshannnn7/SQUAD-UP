@@ -18,20 +18,27 @@ import {
     FiDollarSign
 } from 'react-icons/fi';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 export default function BookingsPage() {
-    const { user } = useAuth();
+    const { user, isAuthenticated, isInitialized } = useAuth();
+    const router = useRouter();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('upcoming');
 
     useEffect(() => {
+        if (!isInitialized) return;
+        if (!isAuthenticated) {
+            router.replace('/auth/login');
+            return;
+        }
         fetchBookings();
-    }, [activeTab]);
+    }, [activeTab, isInitialized, isAuthenticated]);
 
     const fetchBookings = async () => {
         try {

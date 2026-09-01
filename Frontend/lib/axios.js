@@ -11,9 +11,21 @@ const api = axios.create({
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
-    (config) => {
+    async (config) => {
         if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('token');
+            let token = localStorage.getItem('token');
+            try {
+                const { auth } = await import('./firebase');
+                if (auth?.currentUser) {
+                    const freshToken = await auth.currentUser.getIdToken(false);
+                    if (freshToken) {
+                        token = freshToken;
+                        localStorage.setItem('token', freshToken);
+                    }
+                }
+            } catch {
+                // Ignore if firebase not loaded or SSR
+            }
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }

@@ -51,7 +51,7 @@ export default function MentorDashboard() {
     const statCards = [
         { label: 'Total Sessions', value: stats?.totalSessions?.toString() || '0', icon: <FiUsers />, color: 'text-blue-600', bg: 'bg-blue-100' },
         { label: 'Upcoming', value: stats?.upcomingBookings?.toString() || '0', icon: <FiCalendar />, color: 'text-purple-600', bg: 'bg-purple-100' },
-        { label: 'Avg Rating', value: stats?.rating?.toString() || '5.0', icon: <FiStar />, color: 'text-yellow-600', bg: 'bg-yellow-100' },
+        { label: 'Avg Rating', value: stats?.rating > 0 ? Number(stats.rating).toFixed(1) : '—', icon: <FiStar />, color: 'text-yellow-600', bg: 'bg-yellow-100' },
         { label: 'Monthly Revenue', value: `₹${stats?.monthlyEarnings || 0}`, icon: <FiDollarSign />, color: 'text-green-600', bg: 'bg-green-100' },
     ];
 
