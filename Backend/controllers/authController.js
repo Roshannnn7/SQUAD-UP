@@ -647,6 +647,94 @@ const resetPassword = asyncHandler(async (req, res) => {
     res.json({ message: 'Password reset successful. Please log in with your new password.' });
 });
 
+// ─────────────────────────────────────────────
+// SESSION MANAGEMENT
+// ─────────────────────────────────────────────
+
+// @desc    List all active sessions for the current user
+// @route   GET /api/auth/sessions
+// @access  Private
+const getSessions = asyncHandler(async (req, res) => {
+    const sessions = await RefreshToken.find({
+        user: req.user._id,
+        isRevoked: false,
+        expiresAt: { $gt: new Date() },
+    })
+        .select('userAgent ip createdAt expiresAt updatedAt')
+        .sort({ createdAt: -1 });
+
+    res.json(sessions);
+});
+
+// @desc    Revoke a specific session
+// @route   DELETE /api/auth/sessions/:tokenId
+// @access  Private
+const revokeSession = asyncHandler(async (req, res) => {
+    const session = await RefreshToken.findOne({
+        _id: req.params.tokenId,
+        user: req.user._id,
+    });
+    if (!session) {
+        res.status(404);
+        throw new Error('Session not found');
+    }
+    session.isRevoked = true;
+    await session.save();
+    res.json({ message: 'Session revoked' });
+});
+
+// @desc    Revoke all sessions except the current one
+// @route   DELETE /api/auth/sessions
+// @access  Private
+const revokeAllSessions = asyncHandler(async (req, res) => {
+    // Current refresh token from cookie or body
+    const currentToken = req.cookies?.refreshToken || req.body?.currentRefreshToken;
+    const filter = { user: req.user._id, isRevoked: false };
+    if (currentToken) filter.token = { $ne: currentToken };
+
+    await RefreshToken.updateMany(filter, { isRevoked: true });
+    res.json({ message: 'All other sessions revoked' });
+});
+
+// ─────────────────────────────────────────────
+// REFERRAL SYSTEM
+// ─────────────────────────────────────────────
+
+// @desc    Generate referral code for a user (if they don't have one)
+// @route   POST /api/auth/referral/generate
+// @access  Private
+const generateReferralCode = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (user.referralCode) {
+        return res.json({ referralCode: user.referralCode });
+    }
+    // Generate unique 8-char alphanumeric code
+    let code, exists;
+    do {
+        code = crypto.randomBytes(4).toString('hex').toUpperCase();
+        exists = await User.findOne({ referralCode: code });
+    } while (exists);
+
+    user.referralCode = code;
+    await user.save();
+    res.json({ referralCode: code });
+});
+
+// @desc    Get referral stats for the current user
+// @route   GET /api/auth/referral/stats
+// @access  Private
+const getReferralStats = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select('referralCode referralCount referralXpEarned');
+    res.json({
+        referralCode: user.referralCode || null,
+        referralCount: user.referralCount || 0,
+        referralXpEarned: user.referralXpEarned || 0,
+        shareUrl: user.referralCode
+            ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/register?ref=${user.referralCode}`
+            : null,
+    });
+});
+
 module.exports = {
     registerManual,
     loginLocal,
@@ -660,4 +748,9 @@ module.exports = {
     getUserProfile,
     forgotPassword,
     resetPassword,
+    getSessions,
+    revokeSession,
+    revokeAllSessions,
+    generateReferralCode,
+    getReferralStats,
 };

@@ -120,6 +120,13 @@ app.use('/api/standups', standupRoutes);
 app.use('/api/challenges', skillChallengeRoutes);
 app.use('/api/milestones', milestoneRoutes);
 
+// 🔥 New Feature Routes (Phase 2)
+const exploreRoutes = require('./routes/exploreRoutes');
+const mentorReviewRoutes = require('./routes/mentorReviewRoutes');
+
+app.use('/api/explore', exploreRoutes);
+app.use('/api/mentor-reviews', mentorReviewRoutes);
+
 // Duplicate mounts for platform flexibility
 app.use('/auth', authRoutes);
 

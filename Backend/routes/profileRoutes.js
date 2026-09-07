@@ -11,12 +11,14 @@ const {
     updateEducation,
     deleteEducation,
     searchUsers,
+    getActivityHeatmap,
 } = require('../controllers/profileController');
 const { protect, optionalAuth } = require('../middleware/auth');
 
 // Profile routes
 router.get('/search', searchUsers);
 router.get('/me', protect, getMyProfile);
+router.get('/:userId/activity-heatmap', getActivityHeatmap);
 router.get('/:userId', optionalAuth, getUserProfile);
 router.put('/', protect, updateUserProfile);
 

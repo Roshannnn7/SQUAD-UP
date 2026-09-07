@@ -32,6 +32,10 @@ const availabilitySchema = mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        isOfficeHour: {
+            type: Boolean,
+            default: false,
+        },
     },
     {
         timestamps: true,

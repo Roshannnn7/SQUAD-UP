@@ -507,6 +507,55 @@ const searchUsers = async (req, res) => {
     }
 };
 
+// @desc    Get activity heatmap data for a user (last 365 days)
+// @route   GET /api/profiles/:userId/activity-heatmap
+// @access  Public
+const getActivityHeatmap = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const now = new Date();
+        const yearAgo = new Date(now);
+        yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+
+        const Task = require('../models/Task');
+        const ChallengeSubmission = require('../models/ChallengeSubmission');
+        const StandUp = require('../models/StandUp');
+
+        const [posts, tasks, submissions, standups] = await Promise.all([
+            Post.find({ author: userId, createdAt: { $gte: yearAgo } }).select('createdAt'),
+            Task.find({ createdBy: userId, status: 'done', updatedAt: { $gte: yearAgo } }).select('updatedAt'),
+            ChallengeSubmission.find({ user: userId, createdAt: { $gte: yearAgo } }).select('createdAt'),
+            StandUp.find({ user: userId, createdAt: { $gte: yearAgo } }).select('createdAt'),
+        ]);
+
+        const counts = {};
+        const toKey = (d) => new Date(d).toISOString().slice(0, 10);
+
+        posts.forEach(p => { const k = toKey(p.createdAt); counts[k] = (counts[k] || 0) + 1; });
+        tasks.forEach(t => { const k = toKey(t.updatedAt); counts[k] = (counts[k] || 0) + 1; });
+        submissions.forEach(s => { const k = toKey(s.createdAt); counts[k] = (counts[k] || 0) + 1; });
+        standups.forEach(s => { const k = toKey(s.createdAt); counts[k] = (counts[k] || 0) + 1; });
+
+        const total = Object.values(counts).reduce((sum, v) => sum + v, 0);
+
+        const currentStreak = (() => {
+            let streak = 0;
+            const d = new Date();
+            while (true) {
+                const key = d.toISOString().slice(0, 10);
+                if (counts[key]) { streak++; } else break;
+                d.setDate(d.getDate() - 1);
+            }
+            return streak;
+        })();
+
+        res.json({ counts, total, currentStreak });
+    } catch (error) {
+        console.error('Activity heatmap error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 module.exports = {
     getUserProfile,
     getMyProfile,
@@ -518,4 +567,5 @@ module.exports = {
     updateEducation,
     deleteEducation,
     searchUsers,
+    getActivityHeatmap,
 };

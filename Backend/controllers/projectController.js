@@ -1036,6 +1036,98 @@ const inviteMentor = asyncHandler(async (req, res) => {
     res.json({ message: 'Mentor successfully added to squad!' });
 });
 
+// ============================================================
+// OPEN ROLES
+// ============================================================
+
+// @desc    Add open role to a squad
+// @route   POST /api/projects/:id/open-roles
+// @access  Private (admin/moderator)
+const addOpenRole = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+    if (!project) { res.status(404); throw new Error('Squad not found'); }
+
+    const isAdmin = project.members.some(m =>
+        m.user.toString() === req.user._id.toString() && (m.role === 'admin' || m.role === 'moderator')
+    );
+    if (!isAdmin) { res.status(403); throw new Error('Only admins can manage open roles'); }
+
+    const { title, description, skills } = req.body;
+    project.openRoles.push({
+        title, description,
+        skills: Array.isArray(skills) ? skills : (skills ? skills.split(',').map(s => s.trim()) : []),
+    });
+    await project.save();
+    res.status(201).json(project.openRoles[project.openRoles.length - 1]);
+});
+
+// @desc    Remove open role
+// @route   DELETE /api/projects/:id/open-roles/:roleId
+// @access  Private (admin/moderator)
+const removeOpenRole = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+    if (!project) { res.status(404); throw new Error('Squad not found'); }
+
+    const isAdmin = project.members.some(m =>
+        m.user.toString() === req.user._id.toString() && (m.role === 'admin' || m.role === 'moderator')
+    );
+    if (!isAdmin) { res.status(403); throw new Error('Only admins can manage open roles'); }
+
+    project.openRoles = project.openRoles.filter(r => r._id.toString() !== req.params.roleId);
+    await project.save();
+    res.json({ message: 'Role removed' });
+});
+
+// @desc    Get all squads with open roles
+// @route   GET /api/projects/open-roles
+// @access  Public
+const getAllOpenRoles = asyncHandler(async (req, res) => {
+    const { skill } = req.query;
+    const filter = {
+        isPublic: true,
+        'openRoles.0': { $exists: true },
+        'openRoles.isOpen': true,
+    };
+    if (skill) filter['openRoles.skills'] = { $in: [skill] };
+
+    const projects = await Project.find(filter)
+        .select('name description category openRoles members creator')
+        .populate('creator', 'fullName profilePhoto')
+        .sort({ updatedAt: -1 })
+        .limit(50);
+
+    res.json(projects);
+});
+
+// ============================================================
+// HACKATHON MODE
+// ============================================================
+
+// @desc    Toggle/update hackathon mode for a squad
+// @route   PUT /api/projects/:id/hackathon
+// @access  Private (admin)
+const updateHackathonMode = asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+    if (!project) { res.status(404); throw new Error('Squad not found'); }
+
+    const isAdmin = project.members.some(m =>
+        m.user.toString() === req.user._id.toString() && m.role === 'admin'
+    );
+    if (!isAdmin) { res.status(403); throw new Error('Only squad admins can enable hackathon mode'); }
+
+    const { isHackathon, theme, startAt, endAt, submissionUrl, prizeDescription } = req.body;
+    project.hackathon = {
+        isHackathon: Boolean(isHackathon),
+        theme: theme || '',
+        startAt: startAt ? new Date(startAt) : undefined,
+        endAt: endAt ? new Date(endAt) : undefined,
+        submissionUrl: submissionUrl || '',
+        prizeDescription: prizeDescription || '',
+    };
+    await project.save();
+    res.json(project.hackathon);
+});
+
 module.exports = {
     createProject,
     getProjects,
@@ -1060,4 +1152,8 @@ module.exports = {
     addResource,
     deleteResource,
     inviteMentor,
+    addOpenRole,
+    removeOpenRole,
+    getAllOpenRoles,
+    updateHackathonMode,
 };

@@ -15,6 +15,11 @@ const {
     getUserProfile,
     forgotPassword,
     resetPassword,
+    getSessions,
+    revokeSession,
+    revokeAllSessions,
+    generateReferralCode,
+    getReferralStats,
 } = require('../controllers/authController');
 
 const { protect } = require('../middleware/auth');
@@ -71,5 +76,14 @@ router.put('/complete-mentor-profile',     protect, completeMentorProfile);
 router.get('/me',                          protect, getMe);
 router.put('/profile',                     protect, updateProfile);
 router.get('/profile/:id',                 protect, getUserProfile);
+
+// Session Management
+router.get('/sessions',            protect, getSessions);
+router.delete('/sessions',         protect, revokeAllSessions);
+router.delete('/sessions/:tokenId', protect, revokeSession);
+
+// Referral System
+router.post('/referral/generate',  protect, generateReferralCode);
+router.get('/referral/stats',      protect, getReferralStats);
 
 module.exports = router;

@@ -1,0 +1,42 @@
+{
+  "name": "SquadUp",
+  "short_name": "SquadUp",
+  "description": "Student collaboration and mentorship platform — build squads, ship projects, grow skills.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["education", "productivity", "social"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Explore Squads",
+      "url": "/squads",
+      "description": "Browse and join project squads"
+    },
+    {
+      "name": "My Feed",
+      "url": "/feed",
+      "description": "See posts from your network"
+    },
+    {
+      "name": "Mentors",
+      "url": "/mentors",
+      "description": "Find and book mentors"
+    }
+  ]
+}

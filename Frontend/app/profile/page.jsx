@@ -11,13 +11,14 @@ import {
     FiShield, FiLogOut, FiGlobe, FiMapPin, FiBook, FiPlus, FiTrash2, FiEye,
     FiGrid, FiHeart, FiMessageCircle, FiEdit3, FiSave, FiUsers, FiCheck, FiX,
     FiAward, FiZap, FiCode, FiTrendingUp, FiTwitter, FiLink, FiBookOpen,
-    FiArrowRight, FiInstagram
+    FiArrowRight, FiInstagram, FiActivity
 } from 'react-icons/fi';
 import { BsFire } from 'react-icons/bs';
 import Link from 'next/link';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useRouter, useSearchParams } from 'next/navigation';
+import ContributionHeatmap from '@/components/ContributionHeatmap';
 
 const CURATED_AVATARS = [
     'https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=alpha&backgroundColor=b6e3f4',
@@ -228,6 +229,7 @@ function ProfileContent() {
         { id: 'education', label: 'Education',         icon: <FiBookOpen className="w-3.5 h-3.5" /> },
         { id: 'squads',    label: 'Squads',            icon: <FiUsers className="w-3.5 h-3.5" /> },
         { id: 'badges',    label: 'Badges',            icon: <FiAward className="w-3.5 h-3.5" /> },
+        { id: 'activity',  label: 'Activity',           icon: <FiActivity className="w-3.5 h-3.5" /> },
     ];
 
     return (
@@ -695,6 +697,39 @@ function ProfileContent() {
                                                 ))}
                                             </div>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* Activity Tab — Contribution Heatmap */}
+                                {activeTab === 'activity' && (
+                                    <div className="space-y-5">
+                                        <ContributionHeatmap userId={user?._id} />
+
+                                        {/* Quick actions */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <Link href="/profile/resume"
+                                                className="bg-white/5 hover:bg-violet-600/10 border border-white/10 hover:border-violet-500/30 rounded-3xl p-5 transition-all group"
+                                            >
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="w-9 h-9 bg-violet-600/20 rounded-xl flex items-center justify-center">
+                                                        <FiZap className="text-violet-400 w-4 h-4" />
+                                                    </div>
+                                                    <span className="text-white font-bold">Build CV</span>
+                                                </div>
+                                                <p className="text-gray-400 text-xs">Auto-generate a polished PDF resume from your profile</p>
+                                            </Link>
+                                            <Link href="/profile/referral"
+                                                className="bg-white/5 hover:bg-pink-600/10 border border-white/10 hover:border-pink-500/30 rounded-3xl p-5 transition-all group"
+                                            >
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="w-9 h-9 bg-pink-600/20 rounded-xl flex items-center justify-center">
+                                                        <FiAward className="text-pink-400 w-4 h-4" />
+                                                    </div>
+                                                    <span className="text-white font-bold">Invite & Earn</span>
+                                                </div>
+                                                <p className="text-gray-400 text-xs">Invite friends and earn XP for each successful referral</p>
+                                            </Link>
+                                        </div>
                                     </div>
                                 )}
                             </motion.div>

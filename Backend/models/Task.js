@@ -46,6 +46,14 @@ const taskSchema = mongoose.Schema(
             type: String,
             trim: true,
         }],
+        // Sprint Planning
+        sprint: {
+            sprintNumber: { type: Number, default: 0 },
+            name: { type: String, maxlength: 80 },
+            startDate: { type: Date },
+            endDate: { type: Date },
+            goal: { type: String, maxlength: 300 },
+        },
     },
     {
         timestamps: true,

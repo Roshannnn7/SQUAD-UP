@@ -24,12 +24,17 @@ const {
     addResource,
     deleteResource,
     inviteMentor,
+    addOpenRole,
+    removeOpenRole,
+    getAllOpenRoles,
+    updateHackathonMode,
 } = require('../controllers/projectController');
 const { protect } = require('../middleware/auth');
 
 // Public routes
 router.get('/', getProjects);
 router.get('/my', protect, getMyProjects); // Specific route BEFORE dynamic :id
+router.get('/open-roles', getAllOpenRoles); // Specific route BEFORE dynamic :id
 router.get('/:id', getProjectById);
 router.get('/:id/rules', getSquadRules); // Public - anyone can view rules
 
@@ -69,5 +74,12 @@ router.delete('/:id/resources/:resourceId', protect, deleteResource);
 
 // Mentors
 router.post('/:id/mentors/invite', protect, inviteMentor);
+
+// Open Roles
+router.post('/:id/open-roles', protect, addOpenRole);
+router.delete('/:id/open-roles/:roleId', protect, removeOpenRole);
+
+// Hackathon Mode
+router.put('/:id/hackathon', protect, updateHackathonMode);
 
 module.exports = router;

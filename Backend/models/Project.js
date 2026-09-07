@@ -136,6 +136,28 @@ const projectSchema = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'SquadTemplate',
         },
+        // Open Roles
+        openRoles: [{
+            title: { type: String, required: true, maxlength: 100 },
+            description: { type: String, maxlength: 500 },
+            skills: [{ type: String, trim: true }],
+            postedAt: { type: Date, default: Date.now },
+            isOpen: { type: Boolean, default: true },
+        }],
+        // Hackathon Mode
+        hackathon: {
+            isHackathon: { type: Boolean, default: false },
+            theme: { type: String, maxlength: 200, default: '' },
+            startAt: { type: Date },
+            endAt: { type: Date },
+            submissionUrl: { type: String, default: '' },
+            prizeDescription: { type: String, maxlength: 500, default: '' },
+        },
+        // Health Score (computed, cached)
+        healthScore: {
+            score: { type: Number, default: 0, min: 0, max: 100 },
+            computedAt: { type: Date },
+        },
     },
     {
         timestamps: true,
