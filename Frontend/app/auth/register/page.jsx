@@ -58,10 +58,11 @@ export default function RegisterPage() {
                 firebaseUid: userCredential.user.uid,
             });
 
-            const userData  = response.data.user  || response.data;
-            const authToken = response.data.token || await userCredential.user.getIdToken();
+            const userData     = response.data.user  || response.data;
+            const authToken    = response.data.token || await userCredential.user.getIdToken();
+            const refreshToken = response.data.refreshToken || response.data.user?.refreshToken || '';
 
-            login(userData, authToken);
+            login(userData, authToken, refreshToken);
             toast.success('Account created successfully!');
             router.push('/onboarding');
         } catch (error) {
@@ -83,10 +84,11 @@ export default function RegisterPage() {
                 role:          formData.role,
             });
 
-            const userData = response.data.user || response.data;
-            const authToken = response.data.token || token;
+            const userData     = response.data.user || response.data;
+            const authToken    = response.data.token || token;
+            const refreshToken = response.data.refreshToken || response.data.user?.refreshToken || '';
 
-            login(userData, authToken);
+            login(userData, authToken, refreshToken);
             toast.success('Signed in with Google!');
 
             if (!userData.isProfileComplete) {

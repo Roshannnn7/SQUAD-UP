@@ -99,7 +99,8 @@ const registerManual = asyncHandler(async (req, res) => {
         // Already registered — just return tokens (handles double-submit from Firebase)
         const accessToken  = generateAccessToken(existing._id);
         const refreshToken = await createRefreshToken(existing._id, req);
-        return res.json({ user: buildAuthResponse(existing, accessToken, refreshToken), token: accessToken });
+        const authRes      = buildAuthResponse(existing, accessToken, refreshToken);
+        return res.json({ ...authRes, user: authRes, token: accessToken, refreshToken });
     }
 
     // Generate a unique username from the full name
@@ -125,7 +126,8 @@ const registerManual = asyncHandler(async (req, res) => {
 
     logger.info('New user registered manually', { userId: user._id, role: user.role });
 
-    res.status(201).json({ user: buildAuthResponse(user, accessToken, refreshToken), token: accessToken });
+    const authRes = buildAuthResponse(user, accessToken, refreshToken);
+    res.status(201).json({ ...authRes, user: authRes, token: accessToken, refreshToken });
 });
 
 // ─────────────────────────────────────────────

@@ -17,6 +17,7 @@ export function AuthProvider({ children }) {
         setLoading,
         login: storeLogin,
         logout: storeLogout,
+        updateUser: storeUpdateUser,
     } = useAuthStore();
 
     const [isInitialized, setIsInitialized] = useState(false);
@@ -123,7 +124,7 @@ export function AuthProvider({ children }) {
     };
 
     const updateProfile = (updates) => {
-        setUser({ ...user, ...updates });
+        storeUpdateUser(updates);
     };
 
     const value = {

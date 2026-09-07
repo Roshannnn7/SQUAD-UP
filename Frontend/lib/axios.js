@@ -11,22 +11,10 @@ const api = axios.create({
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
-    async (config) => {
+    (config) => {
         if (typeof window !== 'undefined') {
-            let token = localStorage.getItem('token');
-            try {
-                const { auth } = await import('./firebase');
-                if (auth?.currentUser) {
-                    const freshToken = await auth.currentUser.getIdToken(false);
-                    if (freshToken) {
-                        token = freshToken;
-                        localStorage.setItem('token', freshToken);
-                    }
-                }
-            } catch {
-                // Ignore if firebase not loaded or SSR
-            }
-            if (token) {
+            const token = localStorage.getItem('token');
+            if (token && token !== 'undefined') {
                 config.headers.Authorization = `Bearer ${token}`;
             }
         }
@@ -43,13 +31,19 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        // Do not attempt token refresh on auth endpoints themselves (login, refresh, verify)
+        const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') ||
+            originalRequest?.url?.includes('/auth/refresh') ||
+            originalRequest?.url?.includes('/auth/verify') ||
+            originalRequest?.url?.includes('/auth/register');
+
         // If token expired, try to refresh it
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;
 
             try {
                 const refreshToken = localStorage.getItem('refreshToken');
-                if (refreshToken) {
+                if (refreshToken && refreshToken !== 'undefined') {
                     const response = await axios.post(`${API_URL}/auth/refresh`, {
                         refreshToken,
                     });
@@ -75,8 +69,8 @@ api.interceptors.response.use(
                     window.location.href = '/auth/login';
                 }
             }
-        } else if (error.response?.status === 401) {
-            // Refresh token also expired, logout
+        } else if (error.response?.status === 401 && !isAuthEndpoint) {
+            // Refresh token also expired or invalid, logout
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('token');
                 localStorage.removeItem('refreshToken');

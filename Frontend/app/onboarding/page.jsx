@@ -92,7 +92,7 @@ export default function OnboardingPage() {
             const payload = {
                 college:         studentForm.college,
                 degree:          studentForm.degree,
-                year:            studentForm.graduationYear,
+                year:            studentForm.graduationYear || String(new Date().getFullYear()),
                 semester:        '1',
                 skills:          studentForm.skills,
                 interests:       studentForm.interests,
@@ -110,6 +110,12 @@ export default function OnboardingPage() {
             router.push('/dashboard/student');
         } catch (error) {
             console.error('Student profile error:', error);
+            if (error.response?.data?.message?.toLowerCase().includes('already completed')) {
+                updateProfile({ isProfileComplete: true, role: 'student' });
+                toast.success('Profile is already set up! Redirecting to dashboard...');
+                router.push('/dashboard/student');
+                return;
+            }
             const msg = error.response?.data?.message || 'Failed to complete profile. Please check required fields.';
             toast.error(msg);
         } finally {
@@ -138,6 +144,12 @@ export default function OnboardingPage() {
             router.push('/dashboard/mentor');
         } catch (error) {
             console.error('Mentor profile error:', error);
+            if (error.response?.data?.message?.toLowerCase().includes('already completed')) {
+                updateProfile({ isProfileComplete: true, role: 'mentor' });
+                toast.success('Profile is already set up! Redirecting to dashboard...');
+                router.push('/dashboard/mentor');
+                return;
+            }
             const msg = error.response?.data?.message || 'Failed to complete profile. Please check required fields.';
             toast.error(msg);
         } finally {

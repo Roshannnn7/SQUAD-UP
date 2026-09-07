@@ -11,15 +11,16 @@ export default function MentorOfficeHours({ availability = [], onSelectSlot }) {
 
     // Group availability slots by day of week
     const groupedSlots = DAY_NAMES.map((name, index) => {
-        const slots = availability.filter(
-            (slot) => Number(slot.dayOfWeek) === index && slot.isAvailable !== false
+        const slots = (Array.isArray(availability) ? availability : []).filter(
+            (slot) => slot && Number(slot.dayOfWeek) === index && slot.isAvailable !== false
         );
         return { dayName: name, dayIndex: index, slots };
     });
 
-    const hasAnySlots = availability.some((s) => s.isAvailable !== false);
+    const hasAnySlots = (Array.isArray(availability) ? availability : []).some((s) => s && s.isAvailable !== false);
 
     const handleSelect = (slot) => {
+        if (!slot) return;
         setSelectedSlotId(slot._id || `${slot.dayOfWeek}-${slot.startTime}`);
         if (onSelectSlot) {
             onSelectSlot(slot);
