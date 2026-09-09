@@ -1,14 +1,19 @@
 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="sqPrimaryGrad" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#4F46E5" />
-      <stop offset="50%" stop-color="#7C3AED" />
-      <stop offset="100%" stop-color="#06B6D4" />
+    <linearGradient id="fvG" x1="10" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C7FF5"/>
+      <stop offset="100%" stop-color="#4348D4"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="16" fill="#0F172A" />
-  <path d="M 44 20 C 44 14 36 12 28 14 C 20 16 18 24 24 28 L 40 36 C 46 40 44 48 36 50 C 28 52 20 50 20 44" stroke="url(#sqPrimaryGrad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
-  <circle cx="44" cy="20" r="5" fill="#38BDF8" />
-  <circle cx="32" cy="32" r="5" fill="#8B5CF6" />
-  <circle cx="20" cy="44" r="5" fill="#4F46E5" />
+  <!-- White rounded square background for favicon legibility -->
+  <rect width="64" height="64" rx="14" fill="white"/>
+  <!-- Bold S mark -->
+  <path
+    d="M 46 15 C 46 9, 39 6, 32 6 C 23 6, 16 12, 16 20 C 16 27, 22 31, 30 34 C 38 37, 44 40, 44 48 C 44 55, 38 58, 30 58 C 22 58, 14 54, 14 46"
+    stroke="url(#fvG)"
+    stroke-width="10"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
 </svg>

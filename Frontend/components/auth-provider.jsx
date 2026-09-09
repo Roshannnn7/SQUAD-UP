@@ -1,12 +1,14 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/axios';
 
 const AuthContext = createContext({});
 
 export function AuthProvider({ children }) {
+    const router = useRouter();
     const {
         user,
         token,
@@ -105,6 +107,24 @@ export function AuthProvider({ children }) {
 
         initializeAuth();
     }, [setUser, setToken, setRefreshToken, setLoading, storeLogout]);
+
+    /**
+     * Listen for the `auth:session-expired` event dispatched by the axios interceptor.
+     * This is the single authoritative logout path — it clears all auth state and
+     * navigates to the login page. The axios interceptor must NOT call
+     * window.location.href directly because it fires before this provider initializes,
+     * which would wipe valid tokens in a race condition.
+     */
+    const handleSessionExpired = useCallback(() => {
+        console.warn('[auth-provider] Session expired — logging out');
+        storeLogout();
+        router.push('/auth/login');
+    }, [storeLogout, router]);
+
+    useEffect(() => {
+        window.addEventListener('auth:session-expired', handleSessionExpired);
+        return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+    }, [handleSessionExpired]);
 
     const login = (userData, token, refreshToken) => {
         storeLogin(userData, token, refreshToken);

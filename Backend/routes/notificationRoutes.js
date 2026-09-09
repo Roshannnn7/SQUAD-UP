@@ -9,10 +9,13 @@ const {
 } = require('../controllers/notificationController');
 const { protect } = require('../middleware/auth');
 
+// Specific routes MUST come before parameterised /:id routes.
+// Otherwise Express matches "read-all" as an :id value.
 router.get('/', protect, getNotifications);
-router.put('/:id/read', protect, markAsRead);
-router.put('/read-all', protect, markAllAsRead);
-router.delete('/:id', protect, deleteNotification);
 router.get('/unread-count', protect, getUnreadCount);
+router.put('/read-all', protect, markAllAsRead);
+router.put('/:id/read', protect, markAsRead);
+router.delete('/:id', protect, deleteNotification);
 
 module.exports = router;
+

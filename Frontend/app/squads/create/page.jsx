@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import api from '@/lib/axios';
+import { useAuth } from '@/components/auth-provider';
 import toast from 'react-hot-toast';
 import { FiPlus, FiCpu, FiGithub, FiUsers, FiInfo, FiLayers } from 'react-icons/fi';
 
 export default function CreateSquadPage() {
     const router = useRouter();
+    const { isAuthenticated, isInitialized } = useAuth();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -19,6 +21,14 @@ export default function CreateSquadPage() {
         maxMembers: 5,
         isPublic: true,
     });
+
+    // Auth guard: redirect unauthenticated users before rendering the form.
+    useEffect(() => {
+        if (isInitialized && !isAuthenticated) {
+            toast.error('Please sign in to create a squad.');
+            router.push('/auth/login');
+        }
+    }, [isAuthenticated, isInitialized, router]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -30,6 +40,13 @@ export default function CreateSquadPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!isAuthenticated) {
+            toast.error('Please sign in to create a squad.');
+            router.push('/auth/login');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -42,8 +59,23 @@ export default function CreateSquadPage() {
             toast.success('Squad created successfully!');
             router.push(`/squads/${res.data._id}`);
         } catch (error) {
-            console.error('Create project error:', error);
-            toast.error(error.response?.data?.message || 'Failed to create squad.');
+            // Log structured error info for debugging (never logs secrets)
+            const status = error.response?.status;
+            const serverMsg = error.response?.data?.message;
+            console.error('[CreateSquad] Error:', {
+                status,
+                message: serverMsg || error.message,
+            });
+
+            // Show a clear, user-facing message
+            if (status === 401) {
+                toast.error('Your session has expired. Please sign in again.');
+                router.push('/auth/login');
+            } else if (status === 400) {
+                toast.error(serverMsg || 'Invalid squad details. Please check your input.');
+            } else {
+                toast.error(serverMsg || 'Unable to create squad. Please try again.');
+            }
         } finally {
             setLoading(false);
         }

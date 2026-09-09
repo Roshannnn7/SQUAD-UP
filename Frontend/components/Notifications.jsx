@@ -3,29 +3,32 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/axios';
+import { useAuth } from './auth-provider';
 import { FiBell, FiX, FiCheck, FiInfo, FiCalendar, FiMessageSquare, FiUsers } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 
 export default function Notifications() {
+    const { isAuthenticated } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (!token) return;
+        // Only poll notifications once auth-provider has confirmed the user is logged in.
+        // Checking raw localStorage here would fire before initializeAuth completes,
+        // potentially triggering a 401 that the axios interceptor mishandles.
+        if (!isAuthenticated) return;
 
         fetchNotifications();
 
         // Refresh notifications every minute
         const interval = setInterval(fetchNotifications, 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [isAuthenticated]);
 
     const fetchNotifications = async () => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         try {
             const [res, unread] = await Promise.allSettled([
