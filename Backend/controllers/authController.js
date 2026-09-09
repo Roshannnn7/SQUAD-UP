@@ -294,7 +294,27 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     if (stored.isRevoked) {
-        // Possible token reuse — revoke ALL tokens for this user (reuse detection)
+        // Concurrency grace period: check if this token was rotated within the last 30 seconds
+        // This handles legitimate parallel in-flight requests that hit 401 simultaneously
+        const gracePeriodMs = 30 * 1000;
+        const timeSinceRevocation = Date.now() - new Date(stored.updatedAt).getTime();
+
+        if (stored.replacedByToken && timeSinceRevocation < gracePeriodMs) {
+            const replacement = await RefreshToken.findOne({ token: stored.replacedByToken });
+            if (replacement && !replacement.isRevoked && replacement.expiresAt > new Date()) {
+                const user = await User.findById(stored.user);
+                if (user && user.isActive) {
+                    const newAccessToken = generateAccessToken(user._id);
+                    logger.info('Returning replacement token within rotation grace period', { userId: user._id });
+                    return res.json({
+                        token:        newAccessToken,
+                        refreshToken: replacement.token,
+                    });
+                }
+            }
+        }
+
+        // Hostile / true token reuse detected beyond grace period
         logger.warn('Refresh token reuse detected — revoking all sessions', {
             userId: stored.user,
             ip:     req.ip,
@@ -315,15 +335,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         throw new Error('User not found or suspended');
     }
 
-    // Rotate: revoke old token, issue new pair
-    stored.isRevoked = true;
-    await stored.save();
-
+    // Issue new pair first
     const newAccessToken  = generateAccessToken(user._id);
     const newRefreshToken = await createRefreshToken(user._id, req);
 
-    // Update rotation chain for audit
-    await RefreshToken.updateOne({ token: newRefreshToken }, { replacedByToken: rawToken });
+    // Rotate: revoke old token and link to replacement token for grace period / audit
+    stored.isRevoked = true;
+    stored.replacedByToken = newRefreshToken;
+    await stored.save();
 
     logger.info('Tokens rotated', { userId: user._id });
 

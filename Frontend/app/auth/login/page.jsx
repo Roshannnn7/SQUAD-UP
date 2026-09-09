@@ -169,11 +169,32 @@ export default function LoginPage() {
                     case 'admin':
                         router.push('/dashboard/admin');
                         break;
+                    default:
+                        router.push('/dashboard/student');
                 }
             }
         } catch (error) {
-            console.error('Google login error:', error);
-            toast.error('Failed to login with Google.');
+            console.error('[GoogleAuth] Error details:', {
+                code: error.code || 'UNKNOWN',
+                message: error.message || 'No message provided',
+                status: error.response?.status,
+            });
+
+            if (error.code === 'auth/popup-closed-by-user') {
+                toast('Sign-in cancelled.', { icon: 'ℹ️' });
+            } else if (error.code === 'auth/popup-blocked') {
+                toast.error('Sign-in popup was blocked by your browser. Please allow popups for this site.');
+            } else if (error.code === 'auth/cancelled-popup-request') {
+                toast('Sign-in already in progress. Please complete the open popup.', { icon: '⏳' });
+            } else if (error.code === 'auth/unauthorized-domain') {
+                toast.error('This domain is not authorized for authentication. Please verify Firebase settings.');
+            } else if (error.message?.includes('503') || error.message?.includes('Varnish') || error.message?.includes('backend')) {
+                toast.error('Authentication service is temporarily unavailable. Please try again shortly or use email/password.');
+            } else if (error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error('Unable to complete Google sign-in. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -206,11 +227,32 @@ export default function LoginPage() {
                     case 'admin':
                         router.push('/dashboard/admin');
                         break;
+                    default:
+                        router.push('/dashboard/student');
                 }
             }
         } catch (error) {
-            console.error('GitHub login error:', error);
-            toast.error('Failed to login with GitHub.');
+            console.error('[GithubAuth] Error details:', {
+                code: error.code || 'UNKNOWN',
+                message: error.message || 'No message provided',
+                status: error.response?.status,
+            });
+
+            if (error.code === 'auth/operation-not-allowed') {
+                toast.error('GitHub sign-in is not configured yet. Please sign in with Google or Email.');
+            } else if (error.code === 'auth/popup-closed-by-user') {
+                toast('Sign-in cancelled.', { icon: 'ℹ️' });
+            } else if (error.code === 'auth/popup-blocked') {
+                toast.error('Sign-in popup was blocked by your browser. Please allow popups for this site.');
+            } else if (error.code === 'auth/unauthorized-domain') {
+                toast.error('This domain is not authorized for authentication. Please verify Firebase settings.');
+            } else if (error.message?.includes('503') || error.message?.includes('Varnish') || error.message?.includes('backend')) {
+                toast.error('Authentication service is temporarily unavailable. Please try again shortly or use email/password.');
+            } else if (error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error('Unable to complete GitHub sign-in. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }

@@ -20,25 +20,41 @@ export async function DELETE(request, { params }) {
 
 async function handle(request, params) {
     try {
-        const backendBase = process.env.BACKEND_URL || 'http://localhost:5000';
-        const path = Array.isArray(params?.path) ? params.path.join('/') : '';
-        const url = `${backendBase}/${path}`.replace(/\/{2,}/g, '/').replace('https:/', 'https://').replace('http:/', 'http://');
+        const rawBackend = (process.env.BACKEND_URL || 'http://localhost:5000').trim().replace(/\/+$/, '');
+        const pathSegments = Array.isArray(params?.path) ? params.path : [];
+        const path = pathSegments.join('/');
+
+        // Ensure Express backend receives /api/* prefix correctly
+        let targetPath = '';
+        if (rawBackend.endsWith('/api')) {
+            targetPath = `/${path}`;
+        } else if (path.startsWith('api/') || path === 'api') {
+            targetPath = `/${path}`;
+        } else {
+            targetPath = `/api/${path}`;
+        }
+
+        // Preserve all query parameters (e.g. ?unread=true, ?page=1)
+        const requestUrl = new URL(request.url);
+        const search = requestUrl.search || '';
+        const fullTargetUrl = `${rawBackend}${targetPath}${search}`.replace(/([^:]\/)\/+/g, '$1');
 
         const headers = new Headers();
-        // Forward content-type and authorization if present
-        const reqHeaders = request.headers;
-        const contentType = reqHeaders.get('content-type');
-        const authorization = reqHeaders.get('authorization');
-        if (contentType) headers.set('content-type', contentType);
-        if (authorization) headers.set('authorization', authorization);
+        // Forward essential request headers
+        for (const [key, value] of request.headers.entries()) {
+            const lower = key.toLowerCase();
+            if (!['host', 'connection', 'content-length'].includes(lower)) {
+                headers.set(key, value);
+            }
+        }
 
-        // Forward body for non-GET methods
+        // Forward body for mutating HTTP methods
         let body = undefined;
         if (request.method !== 'GET' && request.method !== 'HEAD') {
             body = await request.arrayBuffer();
         }
 
-        const resp = await fetch(url, {
+        const resp = await fetch(fullTargetUrl, {
             method: request.method,
             headers,
             body,
@@ -50,16 +66,21 @@ async function handle(request, params) {
             ? await resp.json()
             : await resp.text();
 
-        const responseInit = {
-            status: resp.status,
-            headers: {
-                'content-type': contentTypeResp || 'application/json',
-            },
-        };
+        const responseHeaders = new Headers();
+        responseHeaders.set('content-type', contentTypeResp || 'application/json');
+
+        // Forward set-cookie if returned by backend
+        const setCookie = resp.headers.get('set-cookie');
+        if (setCookie) {
+            responseHeaders.set('set-cookie', setCookie);
+        }
 
         return new Response(
             typeof data === 'string' ? data : JSON.stringify(data),
-            responseInit
+            {
+                status: resp.status,
+                headers: responseHeaders,
+            }
         );
     } catch (err) {
         return new Response(

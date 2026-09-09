@@ -23,29 +23,51 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Response interceptor: on 401, attempt a single token refresh then retry.
-//
-// IMPORTANT — why we do NOT call window.location.href here:
-//   This interceptor runs before auth-provider.jsx finishes its async `initializeAuth`.
-//   If we redirect on the very first 401 (e.g. from the Notifications poll that fires at
-//   mount time), we wipe valid tokens from localStorage in a race-condition, logging the
-//   user out even though their session is still valid.
-//   Instead we dispatch a custom DOM event that auth-provider listens to — keeping all
-//   logout logic in one place and avoiding the race condition.
+// State for concurrent refresh token synchronization
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
+// Response interceptor: on 401, synchronously queue requests and perform a single atomic token refresh.
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        // Never attempt refresh on the auth endpoints themselves.
+        // Never attempt refresh on the auth endpoints themselves or missing requests
+        if (!originalRequest) return Promise.reject(error);
+
         const isAuthEndpoint =
-            originalRequest?.url?.includes('/auth/login') ||
-            originalRequest?.url?.includes('/auth/refresh') ||
-            originalRequest?.url?.includes('/auth/verify') ||
-            originalRequest?.url?.includes('/auth/register');
+            originalRequest.url?.includes('/auth/login') ||
+            originalRequest.url?.includes('/auth/refresh') ||
+            originalRequest.url?.includes('/auth/verify') ||
+            originalRequest.url?.includes('/auth/register');
 
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+            if (isRefreshing) {
+                // Another request is already refreshing the token — queue this request until finished
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then((token) => {
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        return api(originalRequest);
+                    })
+                    .catch((err) => Promise.reject(err));
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
 
             try {
                 const refreshToken =
@@ -53,25 +75,31 @@ api.interceptors.response.use(
                         ? localStorage.getItem('refreshToken')
                         : null;
 
-                if (refreshToken && refreshToken !== 'undefined') {
-                    const response = await axios.post(`${API_URL}/auth/refresh`, {
-                        refreshToken,
-                    });
-
-                    const newAccessToken = response.data.token;
-                    const newRefreshToken = response.data.refreshToken;
-
-                    if (typeof window !== 'undefined') {
-                        localStorage.setItem('token', newAccessToken);
-                        if (newRefreshToken) {
-                            localStorage.setItem('refreshToken', newRefreshToken);
-                        }
-                    }
-
-                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-                    return api(originalRequest);
+                if (!refreshToken || refreshToken === 'undefined') {
+                    throw new Error('No refresh token available');
                 }
+
+                const response = await axios.post(`${API_URL}/auth/refresh`, {
+                    refreshToken,
+                });
+
+                const newAccessToken = response.data.token;
+                const newRefreshToken = response.data.refreshToken;
+
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('token', newAccessToken);
+                    if (newRefreshToken) {
+                        localStorage.setItem('refreshToken', newRefreshToken);
+                    }
+                }
+
+                api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+                processQueue(null, newAccessToken);
+                return api(originalRequest);
             } catch (refreshError) {
+                processQueue(refreshError, null);
                 const msg =
                     refreshError?.response?.data?.message ||
                     refreshError?.message ||
@@ -79,10 +107,12 @@ api.interceptors.response.use(
                 console.warn('[axios] Token refresh failed:', msg);
 
                 // Signal auth-provider to perform a clean logout.
-                // Do NOT mutate localStorage or redirect directly from here.
                 if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('auth:session-expired'));
                 }
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
             }
         }
 
